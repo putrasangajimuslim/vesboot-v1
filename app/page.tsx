@@ -116,7 +116,7 @@ export default function Home() {
           {hasMounted && (
             <div className="mt-6 flex flex-col gap-2 text-sm font-medium text-slate-500">
               {/* Label Buka */}
-              <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full w-fit text-[10px] uppercase font-bold">
+              <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full w-fit text-[10px] uppercase font-bold mb-2">
                 <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div> 
                 Buka Sekarang
               </div>
