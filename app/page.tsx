@@ -217,49 +217,46 @@ export default function Home() {
       </section>
 
       {/* SECTION: KATALOG PRODUK (Dibuat lebih rapat dengan pb-8 pt-12) */}
-      <section className="pt-32 pb-20">
+      <section className="pt-32 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
-          
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
               <h2 className="text-4xl font-extrabold text-slate-900 mb-2">Pilihan <span className="text-orange-600">Slay</span></h2>
               <p className="text-slate-500">Upgrade performa dan visual Vespamu sekarang.</p>
             </div>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {["Semua", "Oli", "Aksesoris", "Knalpot"].map((cat) => (
-                <button 
-                  key={cat} 
-                  onClick={() => setFilter(cat)} 
-                  className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-200 hover:bg-slate-300'}`}
-                >
+                <button key={cat} onClick={() => setFilter(cat)} className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap ${filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-200 hover:bg-slate-300'}`}>
                   {cat}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Carousel dengan Padding-X (px-6) agar tidak menempel di sisi kiri/kanan layar */}
-          <div className="relative px-6"> 
+          <div className="relative">
             <div className="overflow-hidden" ref={emblaRef}>
-              {/* Gap antar card diatur di sini */}
-              <div className="flex gap-6"> 
+              {/* items-stretch: Memastikan semua card memiliki tinggi yang sama */}
+              <div className="flex gap-6 pb-6 items-stretch"> 
                 {filtered.map((p) => {
                   const discPrice = p.price - (p.price * ((p.disc || 0) / 100));
                   return (
-                    <motion.div 
+                    <div 
                       key={p.id} 
-                      className="flex-[0_0_75%] md:flex-[0_0_23%] bg-white p-5 rounded-[2rem] border border-slate-100 shadow-md shrink-0"
+                      /* w-[280px]: lebar tetap | flex-shrink-0: tidak akan menyusut | flex-col & justify-between: mensejajarkan tombol bawah */
+                      className="w-[280px] md:w-[300px] flex-shrink-0 bg-white p-4 rounded-[2rem] border border-slate-200 shadow-lg flex flex-col justify-between"
                     >
-                      <div className="h-48 bg-slate-100 rounded-2xl mb-4 relative overflow-hidden">
-                        {p.label && <div className="absolute top-4 left-4 px-3 py-1 bg-orange-600 text-white text-[10px] font-black rounded-full uppercase">{p.label}</div>}
-                         {(p.disc || 0) > 0 && (
-                          <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black">
-                            -{p.disc}%
-                          </div>
-                        )}
+                      <div>
+                        <div className="h-48 bg-slate-100 rounded-2xl mb-4 relative overflow-hidden">
+                          {p.label && <div className="absolute top-4 left-4 px-3 py-1 bg-orange-600 text-white text-[10px] font-black rounded-full uppercase">{p.label}</div>}
+                          {(p.disc || 0) > 0 && (
+                            <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black">
+                              -{p.disc}%
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-lg leading-snug">{p.name}</h4>
                       </div>
-                      <h4 className="font-bold text-lg truncate">{p.name}</h4>
+
                       <div className="flex justify-between items-center mt-4">
                         <div>
                           {p.disc > 0 ? (
@@ -271,15 +268,23 @@ export default function Home() {
                             <span className="font-black text-slate-900 text-sm">Rp {p.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <button className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600 shrink-0"><ShoppingBag size={18} /></button>
+                        <button className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600 shrink-0">
+                          <ShoppingBag size={18} />
+                        </button>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
             </div>
-          </div>
 
+            {filtered.length > 2 && (
+              <div className="flex justify-end gap-4 mt-8">
+                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border bg-white hover:bg-slate-100"><ChevronLeft size={20}/></button>
+                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border bg-white hover:bg-slate-100"><ChevronRight size={20}/></button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
