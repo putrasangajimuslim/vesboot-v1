@@ -114,14 +114,19 @@ export default function Home() {
 
           {/* JAM OPERASIONAL - Tampil hanya saat Mounted untuk hindari mismatch */}
           {hasMounted && (
-            <div className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-500">
-              <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-2 py-1 rounded-md text-[10px] uppercase font-bold animate-pulse">
-                <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
-                Buka Sekarang
+            <div className="mt-6 flex flex-col gap-2 text-sm font-medium text-slate-500">
+              <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full w-fit text-[10px] uppercase font-bold">
+                <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div> Buka Sekarang
               </div>
-              <div className="flex items-center gap-1">
-                <Clock size={14} />
-                <span>Senin - Sabtu: 09.00 - 18.00 WIB</span>
+              <div className="flex flex-col gap-1 ml-1">
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="text-orange-600" />
+                  <span>Senin - Jumat: 09.00 - 18.00 WIB</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="opacity-0" />
+                  <span>Sabtu - Minggu: 09.00 - 15.00 WIB</span>
+                </div>
               </div>
             </div>
           )}
