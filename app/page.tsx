@@ -224,9 +224,15 @@ export default function Home() {
               <h2 className="text-4xl font-extrabold text-slate-900 mb-2">Pilihan <span className="text-orange-600">Slay</span></h2>
               <p className="text-slate-500">Upgrade performa dan visual Vespamu sekarang.</p>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
               {["Semua", "Oli", "Aksesoris", "Knalpot"].map((cat) => (
-                <button key={cat} onClick={() => setFilter(cat)} className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap ${filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-200 hover:bg-slate-300'}`}>
+                <button 
+                  key={cat} 
+                  onClick={() => setFilter(cat)} 
+                  className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
+                    filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-200 hover:bg-slate-300'
+                  }`}
+                >
                   {cat}
                 </button>
               ))}
