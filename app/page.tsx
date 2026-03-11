@@ -289,7 +289,7 @@ export default function Home() {
       </section>
 
       {/* Layanan Section - Padding Bottom Dikurangi */}
-      <section className="px-6 pt-4 pb-20 max-w-7xl mx-auto">
+      <section className="px-6 pt-4 pb-8 max-w-7xl mx-auto">
         <div className="mb-12">
           <span className="text-orange-500 font-bold uppercase text-sm">Layanan Bengkel</span>
           <h2 className="text-4xl font-bold mt-2">Titip Vespamu, <br/><span className="text-orange-600">Kami Urus Semuanya</span></h2>
