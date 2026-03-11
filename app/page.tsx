@@ -243,7 +243,7 @@ export default function Home() {
                     <div 
                       key={p.id} 
                       /* w-[280px]: lebar tetap | flex-shrink-0: tidak akan menyusut | flex-col & justify-between: mensejajarkan tombol bawah */
-                      className="w-[280px] md:w-[300px] flex-shrink-0 bg-white p-4 rounded-[2rem] border border-slate-200 shadow-lg flex flex-col justify-between"
+                      className="w-[280px] md:w-[300px] flex-shrink-0 bg-white p-4 rounded-[2rem] border border-slate-200 shadow-md flex flex-col justify-between"
                     >
                       <div>
                         <div className="h-48 bg-slate-100 rounded-2xl mb-4 relative overflow-hidden">
