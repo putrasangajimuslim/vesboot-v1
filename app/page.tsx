@@ -217,7 +217,7 @@ export default function Home() {
       </section>
 
       {/* SECTION: KATALOG PRODUK (Dibuat lebih rapat dengan pb-8 pt-12) */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-16 pb-6 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
@@ -280,8 +280,8 @@ export default function Home() {
 
             {filtered.length > 2 && (
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border bg-white hover:bg-slate-100"><ChevronLeft size={20}/></button>
-                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border bg-white hover:bg-slate-100"><ChevronRight size={20}/></button>
+                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100"><ChevronLeft size={20}/></button>
+                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100"><ChevronRight size={20}/></button>
               </div>
             )}
           </div>
