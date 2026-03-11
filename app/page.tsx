@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import ImageSlider from "./components/ImageSlider";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface Layanan {
   title: string;
@@ -23,6 +25,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [alamat, setAlamat] = useState("");
   const [waktu, setWaktu] = useState("09:00");
+  const [filter, setFilter] = useState("Semua");
   const [selectedVespa, setSelectedVespa] = useState<string | null>(null);
   const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
   const [totalHarga, setTotalHarga] = useState<number>(0);
@@ -49,6 +52,16 @@ export default function Home() {
   // Daftar jam operasional 09:00 - 18:00
   const jamOperasional = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
+  const products = [
+    { id: 1, name: "Vespa Original Oil", price: 150000, label: "Populer", disc: 10, category: "Oli" },
+    { id: 2, name: "Vespa Classic Mirror", price: 250000, label: "Baru", disc: 0, category: "Aksesoris" },
+    { id: 3, name: "Racing Exhaust", price: 1200000, label: "Populer", disc: 20, category: "Knalpot" },
+    { id: 4, name: "Handle Grip Premium", price: 350000, label: "Baru", disc: 5, category: "Aksesoris" },
+    { id: 5, name: "Handle Grip Standar", price: 150000, label: "Baru", disc: 2, category: "Aksesoris" },
+  ];
+
+  const filtered = filter === "Semua" ? products : products.filter(p => p.category === filter);
+
   useEffect(() => {
     if (selectedVespa && selectedLayanan) {
       const vespaObj = listVespa.find(v => v.name === selectedVespa);
@@ -66,6 +79,11 @@ export default function Home() {
       maximumFractionDigits: 0
     }).format(val);
   };
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, slidesToScroll: 1 }, [Autoplay({ delay: 3000 })]);
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
@@ -194,8 +212,77 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SECTION: KATALOG PRODUK (Dibuat lebih rapat dengan pb-8 pt-12) */}
+      <section className="pt-20 pb-18 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <div>
+              <h2 className="text-4xl font-extrabold text-slate-900 mb-2">Pilihan <span className="text-orange-600">Slay</span></h2>
+              <p className="text-slate-500">Upgrade performa dan visual Vespamu sekarang.</p>
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {["Semua", "Oli", "Aksesoris", "Knalpot"].map((cat) => (
+                <button key={cat} onClick={() => setFilter(cat)} className={`px-6 py-2 rounded-full text-sm font-bold ${filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-100'}`}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex gap-6">
+                {filtered.map((p) => {
+                  const discPrice = p.price - (p.price * ((p.disc || 0) / 100));
+                  return (
+                    <motion.div key={p.id} className="flex-[0_0_80%] md:flex-[0_0_23%] relative bg-white p-4 rounded-[2rem]">
+                      {/* Badge Container */}
+                      <div className="h-60 bg-slate-100 rounded-2xl mb-4 relative overflow-hidden">
+                        {p.label && (
+                          <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-black uppercase ${p.label === 'Populer' ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'}`}>
+                            {p.label}
+                          </div>
+                        )}
+                        {(p.disc || 0) > 0 && (
+                          <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black">
+                            -{p.disc}%
+                          </div>
+                        )}
+                      </div>
+
+                      <h4 className="font-bold text-lg">{p.name}</h4>
+                      <div className="flex justify-between items-center mt-4">
+                        <div>
+                          {(p.disc || 0) > 0 ? (
+                            <>
+                              <span className="font-black text-orange-600 block">Rp {discPrice.toLocaleString()}</span>
+                              <span className="text-slate-400 text-xs line-through">Rp {p.price.toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-black text-slate-900">Rp {p.price.toLocaleString()}</span>
+                          )}
+                        </div>
+                        <button className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600"><ShoppingBag size={18} /></button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* NAVIGASI KONDISIONAL */}
+            {filtered.length > 4 && (
+              <div className="flex justify-end gap-4 mt-8">
+                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border hover:bg-slate-900 hover:text-white transition"><ChevronLeft size={20}/></button>
+                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border hover:bg-slate-900 hover:text-white transition"><ChevronRight size={20}/></button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Layanan Section - Padding Bottom Dikurangi */}
-      <section className="px-6 md:px-12 pt-16 pb-4 max-w-7xl mx-auto">
+      <section className="px-6 pt-4 pb-20 max-w-7xl mx-auto">
         <div className="mb-12">
           <span className="text-orange-500 font-bold uppercase text-sm">Layanan Bengkel</span>
           <h2 className="text-4xl font-bold mt-2">Titip Vespamu, <br/><span className="text-orange-600">Kami Urus Semuanya</span></h2>
@@ -312,6 +399,34 @@ export default function Home() {
               <h3 className="font-bold text-base">{armada.name}</h3>
               <p className="text-xs text-slate-500 mt-1">{armada.desc}</p>
               <div className="mt-4 pt-4 border-t border-slate-50 text-[10px] font-bold text-orange-600 uppercase tracking-wider">{armada.cap}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SECTION: TESTIMONI */}
+      <section className="px-6 py-20 bg-white max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-block px-4 py-1 rounded-full bg-orange-50 text-orange-600 font-bold text-xs uppercase tracking-widest mb-4">Pelanggan Bicara</div>
+          <h2 className="text-4xl font-bold">Kata Mereka Soal <span className="text-orange-600">VesBooth</span></h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            { name: 'Rizal A.', vespa: 'Vespa PX 125', text: 'Restorasi PX-ku selesai sempurna. Setiap detail diperhatiin, beneran worth it banget!', initial: 'RA' },
+            { name: 'Dinda S.', vespa: 'Vespa GTS 150', text: 'Servis rutin di sini selalu oke. Mekaniknya jujur, harganya transparan. Pokoknya recommended!', initial: 'DS' },
+            { name: 'Bagas K.', vespa: 'Vespa Primavera', text: 'Custom build pertamaku sukses. Konsepnya dieksekusi persis seperti yang gue mau. Grazie!', initial: 'BK' }
+          ].map((review, i) => (
+            <div key={i} className="p-8 rounded-3xl border border-slate-200 hover:shadow-xl transition-all bg-white">
+              <div className="text-orange-400 mb-4 text-lg">★★★★★</div>
+              <p className="text-slate-600 mb-8 italic">"{review.text}"</p>
+              <div className="flex items-center gap-4 border-t pt-6">
+                <div className="w-12 h-12 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold">{review.initial}</div>
+                <div>
+                  <h4 className="font-bold text-slate-800">{review.name}</h4>
+                  <p className="text-xs text-slate-400">{review.vespa}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

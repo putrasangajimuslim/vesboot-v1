@@ -25,3 +25,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
+
+@layer utilities {
+  /* Menyembunyikan scrollbar secara total */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE dan Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+
+  /* Jika Anda ingin menghilangkan scrollbar pada elemen yang di-scroll, 
+     tetapi tetap ingin bisa di-scroll, gunakan class ini */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
