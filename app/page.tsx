@@ -112,20 +112,24 @@ export default function Home() {
             Sparepart original, bengkel berpengalaman, harga transparan. Semua untuk Vespa kamu yang satu itu.
           </p>
 
-          {/* JAM OPERASIONAL - Tampil hanya saat Mounted untuk hindari mismatch */}
+          {/* JAM OPERASIONAL - Ikon satu di tengah */}
           {hasMounted && (
             <div className="mt-6 flex flex-col gap-2 text-sm font-medium text-slate-500">
+              {/* Label Buka */}
               <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full w-fit text-[10px] uppercase font-bold">
-                <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div> Buka Sekarang
+                <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div> 
+                Buka Sekarang
               </div>
-              <div className="flex flex-col gap-1 ml-1">
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-orange-600" />
-                  <span>Senin - Jumat: 09.00 - 18.00 WIB</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={16} className="opacity-0" />
-                  <span>Sabtu - Minggu: 09.00 - 15.00 WIB</span>
+              
+              {/* Container Ikon + Teks */}
+              <div className="flex items-center gap-2 ml-1">
+                {/* Ikon Jam - Diposisikan di tengah secara vertikal oleh flex-items-center */}
+                <Clock size={20} className="text-orange-600 shrink-0 mr-2" />
+                
+                {/* Kolom teks */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="leading-tight">Senin - Jumat: 09.00 - 18.00 WIB</span>
+                  <span className="leading-tight">Sabtu - Minggu: 09.00 - 15.00 WIB</span>
                 </div>
               </div>
             </div>
