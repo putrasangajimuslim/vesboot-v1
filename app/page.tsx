@@ -4,7 +4,7 @@ import Image from "next/image";
 import ImageSlider from "./components/ImageSlider";
 import { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag, CreditCard, ShoppingCart, Search } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
@@ -29,9 +29,14 @@ export default function Home() {
   const [selectedVespa, setSelectedVespa] = useState<string | null>(null);
   const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
   const [totalHarga, setTotalHarga] = useState<number>(0);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false); // Modal Form Booking
+  const [isPayDP, setIsPayDP] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   
   // Solusi Hydration: Memastikan komponen sudah termuat di client
   const [hasMounted, setHasMounted] = useState(false);
+
+  const [cartCount, setCartCount] = useState(0);
 
   const listVespa: VespaType[] = [
     { name: 'Klasik (PX, Sprint, dll)', multiplier: 1 }, 
@@ -80,49 +85,107 @@ export default function Home() {
     }).format(val);
   };
 
+  const openGeneralBooking = () => {
+    setIsPayDP(false);
+    setIsBookingModalOpen(true);
+  };
+
+  const openDPBooking = () => {
+    setIsPayDP(true);
+    setIsBookingModalOpen(true);
+  };
+
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start', 
     containScroll: 'keepSnaps',
     dragFree: true 
   }, [Autoplay({ delay: 3000 })]);
 
+  const addToCart = (productName: string) => {
+    setCartCount((prev) => prev + 1);
+    console.log(`${productName} ditambahkan ke keranjang!`);
+    // Kamu bisa tambahkan notifikasi toast di sini jika sudah menginstal library toast
+  };
+
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
-      {/* NAVBAR */}
-      <nav className="fixed w-full z-50 bg-white/70 backdrop-blur-sm border-b border-slate-200">
-        <div className="flex justify-between items-center px-4 md:px-12 py-4 max-w-7xl mx-auto">
-          <h1 className="text-2xl font-black text-orange-600">VesBooth</h1>
+      <nav className="fixed w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="flex justify-between items-center px-6 md:px-12 py-5 max-w-7xl mx-auto">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center rotate-3 shadow-lg shadow-orange-200">
+                <Zap className="text-white fill-white" size={20} />
+            </div>
+            <h1 className="text-2xl font-black tracking-tighter text-slate-900">VESBOOTH</h1>
+          </div>
           
-          <div className="hidden md:flex gap-6 lg:gap-8 font-medium text-slate-600 text-sm lg:text-base">
-            {['Home', 'Produk', 'Bengkel', 'Gallery', 'Blog', 'Kontak'].map((link) => (
+          <div className="hidden md:flex gap-8 font-bold text-slate-500 text-sm">
+            {['Home', 'Produk', 'Bengkel', 'Gallery'].map((link) => (
               <a key={link} href="#" className="hover:text-orange-600 transition">{link}</a>
             ))}
           </div>
 
-          <button 
-            suppressHydrationWarning
-            className="hidden md:block bg-orange-600 text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-orange-700 transition"
-          >
-            Booking Servis
-          </button>
+          <div className="flex items-center gap-3">
+            {/* DESKTOP: Tombol Keranjang */}
+            <button className="hidden md:flex bg-slate-100 p-3 rounded-2xl relative hover:bg-orange-600 hover:text-white transition cursor-pointer group">
+              <ShoppingCart size={20} className="group-hover:scale-110 transition" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
 
-          <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+            <button className="md:hidden p-2 text-slate-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
         </div>
 
-        {isMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-md border-b p-6 flex flex-col gap-4 shadow-xl">
-            {['Home', 'Produk', 'Bengkel', 'Gallery', 'Blog', 'Kontak'].map((link) => (
-              <a key={link} href="#" className="text-lg font-bold text-slate-800" onClick={() => setIsMenuOpen(false)}>{link}</a>
-            ))}
-            <button className="bg-orange-600 text-white py-3 rounded-xl font-bold w-full">Booking Servis</button>
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -20 }}
+              className="md:hidden bg-white border-b border-slate-200 p-6 flex flex-col gap-4 shadow-xl font-bold"
+            >
+              {['Home', 'Produk', 'Bengkel', 'Gallery', 'Blog', 'Kontak'].map((link) => (
+                <a key={link} href="#" className="text-slate-700 hover:text-orange-600 py-2">{link}</a>
+              ))}
+              <div className="pt-2">
+                <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4 block">Quick Access</span>
+                <button onClick={() => {setIsTrackingModalOpen(true); setIsMenuOpen(false);}} className="flex w-full items-center justify-between gap-2 text-white bg-slate-900 px-6 py-5 rounded-2xl font-black">
+                  <div className="flex items-center gap-3"> Lacak Status Servis</div>
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+
+      {/* MODAL LACAK STATUS */}
+      <AnimatePresence>
+        {isTrackingModalOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-lg">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[3rem] p-8 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-2xl">Lacak Servis</h3>
+                <button onClick={() => setIsTrackingModalOpen(false)}><X/></button>
+              </div>
+              <div className="relative">
+                <input type="text" placeholder="Masukkan ID Order..." className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" />
+                <button className="absolute right-2 top-2 bg-orange-600 text-white p-3 rounded-xl"><Search size={20} /></button>
+              </div>
+              <p className="text-xs text-slate-400 mt-4 font-bold text-center">Contoh: #VB-2026-001</p>
+            </motion.div>
           </div>
         )}
-      </nav>
+      </AnimatePresence>
 
       {/* Hero Section */}
       <section className="px-6 md:px-12 pt-32 py-16 grid md:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
@@ -158,15 +221,15 @@ export default function Home() {
           )}
           
           <div className="mt-8 flex flex-wrap gap-4">
-            <button 
+            <button onClick={openGeneralBooking}
               suppressHydrationWarning
-              className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-orange-700 transition"
+              className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-orange-700 transition cursor-pointer"
             >
               Booking Servis <ArrowRight size={20}/>
             </button>
             <button 
               suppressHydrationWarning
-              className="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition"
+              className="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition cursor-pointer"
             >
               Lihat Produk
             </button>
@@ -220,7 +283,7 @@ export default function Home() {
       <section className="pt-16 pb-6 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
-            <div>
+            <div className="description">
               <h2 className="text-4xl font-extrabold text-slate-900 mb-2">Pilihan <span className="text-orange-600">Slay</span></h2>
               <p className="text-slate-500">Upgrade performa dan visual Vespamu sekarang.</p>
             </div>
@@ -274,7 +337,7 @@ export default function Home() {
                             <span className="font-black text-slate-900 text-sm">Rp {p.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <button className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600 shrink-0">
+                        <button onClick={() => addToCart(p.name)} className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600 shrink-0">
                           <ShoppingBag size={18} />
                         </button>
                       </div>
@@ -286,8 +349,8 @@ export default function Home() {
 
             {filtered.length > 2 && (
               <div className="flex justify-end gap-4 mt-8">
-                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100"><ChevronLeft size={20}/></button>
-                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100"><ChevronRight size={20}/></button>
+                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100 cursor-pointer"><ChevronLeft size={20}/></button>
+                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100 cursor-pointer"><ChevronRight size={20}/></button>
               </div>
             )}
           </div>
@@ -332,6 +395,84 @@ export default function Home() {
           </div>
         </div>
 
+      {/* MODAL: FORM BOOKING */}
+      <AnimatePresence>
+        {isBookingModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+              
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="font-black text-2xl text-slate-900">Form Booking</h3>
+                  <p className="text-slate-500 text-sm">Tentukan jadwal kedatanganmu.</p>
+                </div>
+                <button onClick={() => setIsBookingModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={24}/></button>
+              </div>
+
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nama</label>
+                    <input type="text" placeholder="Budi" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">WhatsApp</label>
+                    <input type="tel" placeholder="0812..." className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition" />
+                  </div>
+                </div>
+
+                {/* INPUT HARI & JAM */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Hari Kedatangan</label>
+                    <div className="relative">
+                      <input type="date" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Jam Datang</label>
+                    <div className="relative">
+                      <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600 appearance-none">
+                        {jamOperasional.map((jam) => (
+                          <option key={jam} value={jam}>{jam} WIB</option>
+                        ))}
+                      </select>
+                      <Clock size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {isPayDP && selectedLayanan && (
+                  <div className="bg-orange-50 border-2 border-orange-100 rounded-3xl p-5 mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold text-orange-800">{selectedLayanan.title}</span>
+                      <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">DP 20%</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] text-orange-600 font-bold uppercase">Bayar Sekarang</p>
+                        <p className="text-2xl font-black text-orange-700">{formatCurrency(totalHarga * 0.2)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">Sisa Pelunasan</p>
+                        <p className="text-sm font-bold text-slate-600">{formatCurrency(totalHarga * 0.8)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4">
+                  <button className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-orange-600 transition shadow-lg flex items-center justify-center gap-3 active:scale-[0.98]">
+                    {isPayDP ? <><CreditCard size={20}/> Bayar DP Sekarang</> : 'Konfirmasi Booking'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
         {/* BOX ESTIMASI */}
         <AnimatePresence>
           {selectedVespa && selectedLayanan && (
@@ -343,7 +484,7 @@ export default function Home() {
               </div>
               <div className="text-left md:text-right">
                 <p className="text-orange-500 font-black text-3xl">{formatCurrency(totalHarga)}</p>
-                <button className="mt-3 bg-orange-600 px-8 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition w-full md:w-auto text-sm">Booking Sekarang</button>
+                <button onClick={openDPBooking} className="mt-3 bg-orange-600 px-8 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition w-full md:w-auto text-sm cursor-pointer">Booking Sekarang</button>
               </div>
             </motion.div>
           )}
