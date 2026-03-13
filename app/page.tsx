@@ -548,18 +548,13 @@ export default function Home() {
                   <div className="bg-orange-50 border-2 border-orange-100 rounded-3xl p-5 mt-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-bold text-orange-800">{selectedLayanan.title}</span>
-                      <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">DP 20%</span>
+                      <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">DP 50%</span>
                     </div>
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-[10px] text-orange-600 font-bold uppercase">Bayar Sekarang</p>
-                        <p className="text-2xl font-black text-orange-700">{formatCurrency(totalHarga * 0.2)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Sisa Pelunasan</p>
-                        <p className="text-sm font-bold text-slate-600">{formatCurrency(totalHarga * 0.8)}</p>
-                      </div>
-                    </div>
+                    <p className="text-[10px] text-orange-600 font-bold uppercase">Bayar Sekarang</p>
+                    <p className="text-2xl font-black text-orange-700">{formatCurrency(totalHarga * 0.5)}</p>
+                    <br />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">Sisa Pelunasan</p>
+                    <p className="text-sm font-bold text-slate-600">{formatCurrency(totalHarga * 0.5)}</p>
                   </div>
                 )}
 
