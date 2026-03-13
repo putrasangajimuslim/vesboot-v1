@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import ImageSlider from "./components/ImageSlider";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag, CreditCard, ShoppingCart, Search } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag, CreditCard, ShoppingCart, Search, Trash2, Plus, Minus } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
@@ -20,6 +20,19 @@ interface VespaType {
   multiplier: number;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  label: string;
+  disc: number;
+  category: string;
+}
+
+interface CartItem extends Product {
+  qty: number;
+}
+
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +45,9 @@ export default function Home() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false); // Modal Form Booking
   const [isPayDP, setIsPayDP] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const cartIconRef = useRef<HTMLDivElement>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // Solusi Hydration: Memastikan komponen sudah termuat di client
   const [hasMounted, setHasMounted] = useState(false);
@@ -57,13 +73,23 @@ export default function Home() {
   // Daftar jam operasional 09:00 - 18:00
   const jamOperasional = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
-  const products = [
+  const products: Product[] = [
     { id: 1, name: "Vespa Original Oil", price: 150000, label: "Populer", disc: 10, category: "Oli" },
     { id: 2, name: "Vespa Classic Mirror", price: 250000, label: "Baru", disc: 0, category: "Aksesoris" },
     { id: 3, name: "Racing Exhaust", price: 1200000, label: "Populer", disc: 20, category: "Knalpot" },
     { id: 4, name: "Handle Grip Premium", price: 350000, label: "Baru", disc: 5, category: "Aksesoris" },
     { id: 5, name: "Handle Grip Standar", price: 150000, label: "Baru", disc: 2, category: "Aksesoris" },
   ];
+
+  const updateQty = (id: number, delta: number) => {
+    setCartItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = Math.max(0, item.qty + delta);
+        return { ...item, qty: newQty };
+      }
+      return item;
+    }).filter(item => item.qty > 0));
+  };
 
   const filtered = filter === "Semua" ? products : products.filter(p => p.category === filter);
 
@@ -101,14 +127,43 @@ export default function Home() {
     dragFree: true 
   }, [Autoplay({ delay: 3000 })]);
 
-  const addToCart = (productName: string) => {
-    setCartCount((prev) => prev + 1);
-    console.log(`${productName} ditambahkan ke keranjang!`);
-    // Kamu bisa tambahkan notifikasi toast di sini jika sudah menginstal library toast
-  };
-
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+
+  const addToCartWithAnimation = (e: React.MouseEvent, product: Product) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+      }
+      return [...prev, { ...product, qty: 1 }];
+    });
+
+    // Animasi Terbang (Visual Feedback)
+    const button = e.currentTarget as HTMLElement;
+    const cartIcon = cartIconRef.current;
+    if (cartIcon && button) {
+      const btnRect = button.getBoundingClientRect();
+      const cartRect = cartIcon.getBoundingClientRect();
+      const flyEl = document.createElement("div");
+      flyEl.style.position = "fixed";
+      flyEl.style.left = `${btnRect.left}px`;
+      flyEl.style.top = `${btnRect.top}px`;
+      flyEl.style.zIndex = "9999";
+      flyEl.style.background = "#ea580c";
+      flyEl.style.padding = "10px";
+      flyEl.style.borderRadius = "50%";
+      flyEl.style.color = "white";
+      flyEl.innerText = "+";
+      document.body.appendChild(flyEl);
+      
+      flyEl.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(0.2) translate(${cartRect.left - btnRect.left}px, ${cartRect.top - btnRect.top}px)`, opacity: 0 }], 
+        { duration: 800, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' }).onfinish = () => flyEl.remove();
+    }
+  };
+
+  const totalQty = cartItems.length;
+  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
@@ -127,16 +182,22 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* DESKTOP: Tombol Keranjang */}
-            <button className="hidden md:flex bg-slate-100 p-3 rounded-2xl relative hover:bg-orange-600 hover:text-white transition cursor-pointer group">
-              <ShoppingCart size={20} className="group-hover:scale-110 transition" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+          <div className="flex items-center gap-4">
+             {/* Ikon Keranjang dengan ref */}
+            <div ref={cartIconRef} onClick={() => setIsCartOpen(!isCartOpen)} className="bg-slate-100 p-3 rounded-2xl relative hover:bg-orange-600 hover:text-white transition cursor-pointer group">
+              <div className="group-hover:scale-110 transition">
+                <ShoppingCart size={22} />
+                {totalQty > 0 && <motion.span initial={{scale:0}} animate={{scale:1}} className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">{totalQty}</motion.span>}
+              </div>
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full"
+                  >{cartCount}</motion.span>
+                )}
+              </AnimatePresence>
+            </div>
 
             <button className="md:hidden p-2 text-slate-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -163,6 +224,42 @@ export default function Home() {
                   <ChevronRight size={18} />
                 </button>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* CART DRAWER */}
+        <AnimatePresence>
+          {isCartOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              className="fixed top-[85px] right-6 w-80 bg-white shadow-2xl rounded-[2rem] p-6 z-[90]"
+            >
+              {totalQty === 0 ? (
+              <p className="text-slate-400 font-bold text-center py-10">Keranjang masih kosong.</p>
+            ) : (
+              <>
+                <p className="font-black text-sm mb-4">({totalQty}) produk yang dipilih</p>
+                <div className="space-y-4 mb-4">
+                  {cartItems.map(item => (
+                    <div key={item.id} className="flex justify-between items-center text-sm font-bold pb-2">
+                      <div className="flex flex-col">
+                        <span>{item.name}</span>
+                        <span className="text-orange-600">Rp {item.price.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => updateQty(item.id, -1)} className="p-1 bg-slate-100 rounded-lg"><Minus size={14}/></button>
+                        <span>{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, 1)} className="p-1 bg-slate-100 rounded-lg"><Plus size={14}/></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t pt-4 font-black flex justify-between text-lg">
+                  <span>Total</span><span>Rp {totalPrice.toLocaleString()}</span>
+                </div>
+                <button className="w-full mt-4 bg-orange-600 text-white py-3 rounded-2xl font-black hover:bg-slate-900 transition">Checkout Sekarang</button>
+              </>
+            )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -337,9 +434,13 @@ export default function Home() {
                             <span className="font-black text-slate-900 text-sm">Rp {p.price.toLocaleString()}</span>
                           )}
                         </div>
-                        <button onClick={() => addToCart(p.name)} className="bg-slate-900 text-white p-3 rounded-full hover:bg-orange-600 shrink-0">
-                          <ShoppingBag size={18} />
-                        </button>
+                        <motion.button 
+                          whileTap={{ scale: 0.8 }}
+                          onClick={(e) => addToCartWithAnimation(e, p)} 
+                          className="bg-slate-900 text-white p-4 rounded-full hover:bg-orange-600 transition"
+                        >
+                          <ShoppingBag size={20} />
+                        </motion.button>
                       </div>
                     </div>
                   );
