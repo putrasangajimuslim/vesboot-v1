@@ -139,26 +139,23 @@ export default function Home() {
       return [...prev, { ...product, qty: 1 }];
     });
 
-    // Animasi Terbang (Visual Feedback)
+    // Efek Animasi Terbang
     const button = e.currentTarget as HTMLElement;
     const cartIcon = cartIconRef.current;
     if (cartIcon && button) {
       const btnRect = button.getBoundingClientRect();
       const cartRect = cartIcon.getBoundingClientRect();
       const flyEl = document.createElement("div");
-      flyEl.style.position = "fixed";
-      flyEl.style.left = `${btnRect.left}px`;
+      flyEl.className = "fixed z-[9999] bg-orange-600 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold pointer-events-none";
+      flyEl.style.left = `${btnRect.left + btnRect.width / 2}px`;
       flyEl.style.top = `${btnRect.top}px`;
-      flyEl.style.zIndex = "9999";
-      flyEl.style.background = "#ea580c";
-      flyEl.style.padding = "10px";
-      flyEl.style.borderRadius = "50%";
-      flyEl.style.color = "white";
-      flyEl.innerText = "+";
+      flyEl.innerText = "+1";
       document.body.appendChild(flyEl);
       
-      flyEl.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(0.2) translate(${cartRect.left - btnRect.left}px, ${cartRect.top - btnRect.top}px)`, opacity: 0 }], 
-        { duration: 800, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' }).onfinish = () => flyEl.remove();
+      flyEl.animate([
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: `translate(${cartRect.left - btnRect.left}px, ${cartRect.top - btnRect.top}px) scale(0.2)`, opacity: 0 }
+      ], { duration: 800, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' }).onfinish = () => flyEl.remove();
     }
   };
 
@@ -183,20 +180,62 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
-             {/* Ikon Keranjang dengan ref */}
-            <div ref={cartIconRef} onClick={() => setIsCartOpen(!isCartOpen)} className="bg-slate-100 p-3 rounded-2xl relative hover:bg-orange-600 hover:text-white transition cursor-pointer group">
-              <div className="group-hover:scale-110 transition">
+            {/* --- WRAPPER FOR MOUSE LEAVE LOGIC --- */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsCartOpen(true)}
+              onMouseLeave={() => setIsCartOpen(false)}
+            >
+              <div 
+                ref={cartIconRef} 
+                className="bg-slate-100 p-3 rounded-2xl relative cursor-pointer hover:bg-slate-200 transition"
+              >
                 <ShoppingCart size={22} />
-                {totalQty > 0 && <motion.span initial={{scale:0}} animate={{scale:1}} className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">{totalQty}</motion.span>}
-              </div>
-              <AnimatePresence>
-                {cartCount > 0 && (
+                {totalQty > 0 && (
                   <motion.span 
-                    initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full"
-                  >{cartCount}</motion.span>
+                    initial={{ scale: 0 }} 
+                    animate={{ scale: 1 }} 
+                    className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black"
+                  >
+                    {totalQty}
+                  </motion.span>
                 )}
-              </AnimatePresence>
+              </div>
+
+              <AnimatePresence>
+              {isCartOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  className="fixed top-[85px] right-6 w-80 bg-white shadow-2xl rounded-[2rem] p-6 z-[90]"
+                >
+                  {totalQty === 0 ? (
+                  <p className="text-slate-400 font-bold text-center py-10">Keranjang masih kosong.</p>
+                ) : (
+                  <>
+                    <p className="font-black text-sm mb-4">({totalQty}) produk yang dipilih</p>
+                    <div className="space-y-4 mb-4">
+                      {cartItems.map(item => (
+                        <div key={item.id} className="flex justify-between items-center text-sm font-bold pb-2">
+                          <div className="flex flex-col">
+                            <span>{item.name}</span>
+                            <span className="text-orange-600">Rp {item.price.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => updateQty(item.id, -1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Minus size={14}/></button>
+                            <span>{item.qty}</span>
+                            <button onClick={() => updateQty(item.id, 1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Plus size={14}/></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t pt-4 font-black flex justify-between text-lg">
+                      <span>Total</span><span>Rp {totalPrice.toLocaleString()}</span>
+                    </div>
+                    <button className="w-full mt-4 bg-orange-600 text-white py-3 rounded-2xl font-black cursor-pointer">Checkout Sekarang</button>
+                  </>
+                )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             </div>
 
             <button className="md:hidden p-2 text-slate-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -224,42 +263,6 @@ export default function Home() {
                   <ChevronRight size={18} />
                 </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* CART DRAWER */}
-        <AnimatePresence>
-          {isCartOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              className="fixed top-[85px] right-6 w-80 bg-white shadow-2xl rounded-[2rem] p-6 z-[90]"
-            >
-              {totalQty === 0 ? (
-              <p className="text-slate-400 font-bold text-center py-10">Keranjang masih kosong.</p>
-            ) : (
-              <>
-                <p className="font-black text-sm mb-4">({totalQty}) produk yang dipilih</p>
-                <div className="space-y-4 mb-4">
-                  {cartItems.map(item => (
-                    <div key={item.id} className="flex justify-between items-center text-sm font-bold pb-2">
-                      <div className="flex flex-col">
-                        <span>{item.name}</span>
-                        <span className="text-orange-600">Rp {item.price.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => updateQty(item.id, -1)} className="p-1 bg-slate-100 rounded-lg"><Minus size={14}/></button>
-                        <span>{item.qty}</span>
-                        <button onClick={() => updateQty(item.id, 1)} className="p-1 bg-slate-100 rounded-lg"><Plus size={14}/></button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t pt-4 font-black flex justify-between text-lg">
-                  <span>Total</span><span>Rp {totalPrice.toLocaleString()}</span>
-                </div>
-                <button className="w-full mt-4 bg-orange-600 text-white py-3 rounded-2xl font-black hover:bg-slate-900 transition">Checkout Sekarang</button>
-              </>
-            )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -500,71 +503,168 @@ export default function Home() {
       <AnimatePresence>
         {isBookingModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-6 sm:p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]"
+            >
               
+              {/* HEADER */}
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="font-black text-2xl text-slate-900">Form Booking</h3>
-                  <p className="text-slate-500 text-sm">Tentukan jadwal kedatanganmu.</p>
+                  <h3 className="font-black text-2xl text-slate-900">
+                    Form Booking
+                  </h3>
+                  <p className="text-slate-500 text-sm">
+                    Tentukan jadwal kedatanganmu.
+                  </p>
                 </div>
-                <button onClick={() => setIsBookingModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={24}/></button>
+
+                <button
+                  onClick={() => setIsBookingModalOpen(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition"
+                >
+                  <X size={24} />
+                </button>
               </div>
 
+              {/* FORM */}
               <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                <div className="grid grid-cols-2 gap-4">
+                
+                {/* NAMA + WA */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nama</label>
-                    <input type="text" placeholder="Budi" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition" />
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                      Nama
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Budi"
+                      className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition"
+                    />
                   </div>
+
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">WhatsApp</label>
-                    <input type="tel" placeholder="0812..." className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition" />
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                      WhatsApp
+                    </label>
+
+                    <input
+                      type="tel"
+                      placeholder="0812..."
+                      className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition"
+                    />
                   </div>
+
                 </div>
 
-                {/* INPUT HARI & JAM */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* HARI + JAM */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Hari Kedatangan</label>
-                    <div className="relative">
-                      <input type="date" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600" />
-                    </div>
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                      Hari Kedatangan
+                    </label>
+
+                    <input
+                      type="date"
+                      className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600"
+                    />
                   </div>
+
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Jam Datang</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                      Jam Datang
+                    </label>
+
                     <div className="relative">
-                      <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600 appearance-none">
+                      <select
+                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none transition text-sm text-slate-600 appearance-none"
+                      >
                         {jamOperasional.map((jam) => (
-                          <option key={jam} value={jam}>{jam} WIB</option>
+                          <option key={jam} value={jam}>
+                            {jam} WIB
+                          </option>
                         ))}
                       </select>
-                      <Clock size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+
+                      <Clock
+                        size={16}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      />
                     </div>
                   </div>
+
                 </div>
 
+                {/* CARD DP */}
                 {isPayDP && selectedLayanan && (
                   <div className="bg-orange-50 border-2 border-orange-100 rounded-3xl p-5 mt-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-bold text-orange-800">{selectedLayanan.title}</span>
-                      <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">DP 50%</span>
+
+                    {/* HEADER LAYANAN */}
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-sm font-bold text-orange-800">
+                        {selectedLayanan.title}
+                      </span>
+
+                      <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">
+                        DP 20%
+                      </span>
                     </div>
-                    <p className="text-[10px] text-orange-600 font-bold uppercase">Bayar Sekarang</p>
-                    <p className="text-2xl font-black text-orange-700">{formatCurrency(totalHarga * 0.5)}</p>
-                    <br />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">Sisa Pelunasan</p>
-                    <p className="text-sm font-bold text-slate-600">{formatCurrency(totalHarga * 0.5)}</p>
+
+                    {/* HARGA RESPONSIVE */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+
+                      {/* BAYAR SEKARANG */}
+                      <div className="pb-3 sm:pb-0 border-b sm:border-none border-orange-200">
+                        <p className="text-[10px] text-orange-600 font-bold uppercase">
+                          Bayar Sekarang
+                        </p>
+
+                        <p className="text-2xl font-black text-orange-700">
+                          {formatCurrency(totalHarga * 0.2)}
+                        </p>
+                      </div>
+
+                      {/* SISA PELUNASAN */}
+                      <div className="sm:text-right">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">
+                          Sisa Pelunasan
+                        </p>
+
+                        <p className="text-sm font-bold text-slate-600">
+                          {formatCurrency(totalHarga * 0.8)}
+                        </p>
+                      </div>
+
+                    </div>
+
                   </div>
                 )}
 
+                {/* BUTTON */}
                 <div className="pt-4">
-                  <button className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-orange-600 transition shadow-lg flex items-center justify-center gap-3 active:scale-[0.98]">
-                    {isPayDP ? <><CreditCard size={20}/> Bayar DP Sekarang</> : 'Konfirmasi Booking'}
+                  <button
+                    className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-orange-600 transition shadow-lg flex items-center justify-center gap-3 active:scale-[0.98]"
+                  >
+                    {isPayDP ? (
+                      <>
+                        <CreditCard size={20} />
+                        Bayar DP Sekarang
+                      </>
+                    ) : (
+                      "Konfirmasi Booking"
+                    )}
                   </button>
                 </div>
+
               </form>
             </motion.div>
+
           </div>
         )}
       </AnimatePresence>
