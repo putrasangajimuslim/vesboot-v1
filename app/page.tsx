@@ -1,340 +1,763 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, Receipt, Search, Trash2, Menu, X, 
-  ShoppingCart, Plus, Minus, Edit3, Check, LogOut,
-  Maximize, Minimize, Droplets, IceCream, StickyNote
-} from 'lucide-react';
+import Image from "next/image";
+import ImageSlider from "./components/ImageSlider";
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, X, ArrowRight, ShieldCheck, Clock, Zap, Wrench, Truck, Bike, Car, MapPin, Check, ChevronRight, ChevronLeft, ShoppingBag, CreditCard, ShoppingCart, Search, Trash2, Plus, Minus } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import Navbar from "./components/navbar";
+import Link from "next/link"
 
-// --- DATA PRODUK (Contoh) ---
-const products = [
-  { id: 1, name: "Milk Tea", category: "Thai Series", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=400&h=400&fit=crop", prices: { Small: 8000, Big: 12000 } },
-  { id: 2, name: "Matcha", category: "Thai Series", image: "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=400&h=400&fit=crop", prices: { Small: 9000, Big: 13000 } },
-  { id: 3, name: "Green Tea", category: "Thai Series", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=400&h=400&fit=crop", prices: { Small: 9000, Big: 13000 } },
-  { id: 4, name: "Milo GreenTea", category: "Thai Series", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=400&h=400&fit=crop", prices: { Small: 12000, Big: 17000 } },
-  { id: 5, name: "Choco Dark", category: "Official Chocolate", image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=400&h=400&fit=crop", prices: { Small: 14000, Big: 14000 } },
-  { id: 6, name: "Mango Yakult", category: "Yakult Series", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=400&h=400&fit=crop", prices: 15000 },
-];
 
-const toppingsData = [
-  { name: "Boba", price: 2000 },
-  { name: "Oreo", price: 2000 },
-  { name: "Creamcheese", price: 4000 },
-];
+interface Layanan {
+  title: string;
+  price: number;
+  displayPrice: string;
+  time: string;
+}
 
-const categories = ["All", "Thai Series", "Yakult Series", "Official Chocolate"];
+interface VespaType {
+  name: string;
+  multiplier: number;
+}
 
-export default function TekoKopiLandscapePOS() {
-  const [cart, setCart] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  label: string;
+  disc: number;
+  category: string;
+}
+
+interface CartItem extends Product {
+  qty: number;
+}
+
+export default function Home() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [alamat, setAlamat] = useState("");
+  const [waktu, setWaktu] = useState("09:00");
+  const [filter, setFilter] = useState("Semua");
+  const [selectedVespa, setSelectedVespa] = useState<string | null>(null);
+  const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
+  const [totalHarga, setTotalHarga] = useState<number>(0);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false); // Modal Form Booking
+  const [isPayDP, setIsPayDP] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const cartIconRef = useRef<HTMLDivElement>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
-  // Customization States
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [customQty, setCustomQty] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string>("Small");
-  const [selectedSugar, setSelectedSugar] = useState<string>("Normal");
-  const [selectedIce, setSelectedIce] = useState<string>("Normal");
-  const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
-  const [orderNote, setOrderNote] = useState<string>("");
-  const [isEditing, setIsEditing] = useState(false);
+  // Solusi Hydration: Memastikan komponen sudah termuat di client
+  const [hasMounted, setHasMounted] = useState(false);
 
-  // --- FULLSCREEN LOGIC ---
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {
-        alert("Gunakan 'Add to Home Screen' di iPhone untuk Fullscreen murni.");
-      });
-    } else {
-      document.exitFullscreen?.();
-    }
-  };
+  const [cartCount, setCartCount] = useState(0);
+
+  const listVespa: VespaType[] = [
+    { name: 'Klasik (PX, Sprint, dll)', multiplier: 1 }, 
+    { name: 'Modern (Primavera, LX)', multiplier: 1.15 }, 
+    { name: 'Premium (GTS, GTV, SEI)', multiplier: 1.35 }
+  ];
+
+  const listLayanan: Layanan[] = [
+    { title: 'Servis Rutin', price: 85000, displayPrice: 'Rp.85.000', time: '1-2 Jam' },
+    { title: 'Restorasi Total', price: 3500000, displayPrice: 'Rp.3.500.000', time: '7-14 Hari' },
+    { title: 'Custom Build', price: 2000000, displayPrice: 'Rp.2.000.000', time: '3-7 Hari' }
+  ];
 
   useEffect(() => {
-    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFs);
-    return () => document.removeEventListener('fullscreenchange', handleFs);
+    setHasMounted(true);
   }, []);
 
-  // --- CART LOGIC ---
-  const hasMultipleSizes = (p: any) => p && typeof p.prices === 'object';
+  // Daftar jam operasional 09:00 - 18:00
+  const jamOperasional = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
-  const openModal = (product: any, editData?: any) => {
-    if (editData) {
-      setSelectedProduct({ ...product, orderId: editData.orderId });
-      setCustomQty(editData.quantity);
-      setSelectedSize(editData.size);
-      setSelectedSugar(editData.sugar || "Normal");
-      setSelectedIce(editData.ice || "Normal");
-      setSelectedToppings(editData.toppings || []);
-      setOrderNote(editData.note || "");
-      setIsEditing(true);
-    } else {
-      setSelectedProduct(product);
-      setCustomQty(1);
-      setSelectedSize(hasMultipleSizes(product) ? "Small" : "Regular");
-      setSelectedSugar("Normal");
-      setSelectedIce("Normal");
-      setSelectedToppings([]);
-      setOrderNote("");
-      setIsEditing(false);
+  const products: Product[] = [
+    { id: 1, name: "Vespa Original Oil", price: 150000, label: "Populer", disc: 10, category: "Oli" },
+    { id: 2, name: "Vespa Classic Mirror", price: 250000, label: "Baru", disc: 0, category: "Aksesoris" },
+    { id: 3, name: "Racing Exhaust", price: 1200000, label: "Populer", disc: 20, category: "Knalpot" },
+    { id: 4, name: "Handle Grip Premium", price: 350000, label: "Baru", disc: 5, category: "Aksesoris" },
+    { id: 5, name: "Handle Grip Standar", price: 150000, label: "Baru", disc: 2, category: "Aksesoris" },
+  ];
+
+  const updateQty = (id: number, delta: number) => {
+    setCartItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = Math.max(0, item.qty + delta);
+        return { ...item, qty: newQty };
+      }
+      return item;
+    }).filter(item => item.qty > 0));
+  };
+
+  const filtered = filter === "Semua" ? products : products.filter(p => p.category === filter);
+
+  useEffect(() => {
+    if (selectedVespa && selectedLayanan) {
+      const vespaObj = listVespa.find(v => v.name === selectedVespa);
+      if (vespaObj) {
+        setTotalHarga(selectedLayanan.price * vespaObj.multiplier);
+      }
+    }
+  }, [selectedVespa, selectedLayanan]);
+
+  // Fungsi Helper untuk format mata uang agar konsisten SSR & Client
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0
+    }).format(val);
+  };
+
+  const openGeneralBooking = () => {
+    setIsPayDP(false);
+    setIsBookingModalOpen(true);
+  };
+
+  const openDPBooking = () => {
+    setIsPayDP(true);
+    setIsBookingModalOpen(true);
+  };
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    align: 'start', 
+    containScroll: 'keepSnaps',
+    dragFree: true 
+  }, [Autoplay({ delay: 3000 })]);
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+
+  const addToCartWithAnimation = (e: React.MouseEvent, product: Product) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+      }
+      return [...prev, { ...product, qty: 1 }];
+    });
+
+    // Efek Animasi Terbang
+    const button = e.currentTarget as HTMLElement;
+    const cartIcon = cartIconRef.current;
+    if (cartIcon && button) {
+      const btnRect = button.getBoundingClientRect();
+      const cartRect = cartIcon.getBoundingClientRect();
+      const flyEl = document.createElement("div");
+      flyEl.className = "fixed z-[9999] bg-orange-600 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold pointer-events-none";
+      flyEl.style.left = `${btnRect.left + btnRect.width / 2}px`;
+      flyEl.style.top = `${btnRect.top}px`;
+      flyEl.innerText = "+1";
+      document.body.appendChild(flyEl);
+      
+      flyEl.animate([
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: `translate(${cartRect.left - btnRect.left}px, ${cartRect.top - btnRect.top}px) scale(0.2)`, opacity: 0 }
+      ], { duration: 800, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' }).onfinish = () => flyEl.remove();
     }
   };
 
-  const confirmAddToCart = () => {
-    const basePrice = hasMultipleSizes(selectedProduct) ? selectedProduct.prices[selectedSize] : selectedProduct.prices;
-    const toppingTotal = selectedToppings.reduce((sum, tName) => {
-      const topping = toppingsData.find(td => td.name === tName);
-      return sum + (topping ? topping.price : 0);
-    }, 0);
-    const newUnitPrice = basePrice + toppingTotal;
-
-    const orderData = {
-      ...selectedProduct,
-      orderId: isEditing ? selectedProduct.orderId : Date.now(),
-      quantity: customQty,
-      size: selectedSize,
-      sugar: selectedSugar,
-      ice: selectedIce,
-      toppings: selectedToppings,
-      note: orderNote,
-      unitPrice: newUnitPrice
-    };
-
-    setCart(prev => {
-      if (isEditing) {
-        return prev.map(item => item.orderId === orderData.orderId ? orderData : item);
-      } else {
-        return [...prev, orderData];
-      }
-    });
-    setSelectedProduct(null);
-  };
-
-  const updateCartQty = (orderId: number, delta: number) => {
-    setCart(prev => prev.map(item => item.orderId === orderId ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item).filter(item => item.quantity > 0));
-  };
-
-  const totalBill = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const totalQty = cartItems.length;
+  const totalPrice = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
   return (
-    <div className="flex h-[100dvh] w-full bg-slate-50 overflow-hidden font-sans text-slate-900 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
-      
-      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-[100] lg:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />}
+    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
+      <Navbar />
 
-      {/* --- SIDEBAR KIRI --- */}
-      <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-white z-[110] transition-transform duration-300 border-r border-slate-100 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-6 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-8">
-            {/* Merubah warna teks menjadi Cokelat Tua */}
-            <h1 className="font-black text-xl text-[#4D3C2A] tracking-tighter">Kasir Mini</h1>
-            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 bg-slate-50 rounded-full"><X size={20}/></button>
+      {/* MODAL LACAK STATUS */}
+      <AnimatePresence>
+        {isTrackingModalOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-lg">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[3rem] p-8 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-2xl">Lacak Servis</h3>
+                <button onClick={() => setIsTrackingModalOpen(false)}><X/></button>
+              </div>
+              <div className="relative">
+                <input type="text" placeholder="Masukkan ID Order..." className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" />
+                <button className="absolute right-2 top-2 bg-orange-600 text-white p-3 rounded-xl"><Search size={20} /></button>
+              </div>
+              <p className="text-xs text-slate-400 mt-4 font-bold text-center">Contoh: #VB-2026-001</p>
+            </motion.div>
           </div>
-          <nav className="flex-1 space-y-1">
-            {/* Merubah warna aktif menjadi Cokelat Tua */}
-            <button onClick={() => setActiveCategory("All")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeCategory === "All" ? 'bg-[#4D3C2A] text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
-              <LayoutDashboard size={18}/> Menu Utama
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-400 hover:bg-slate-50 transition-all">
-              <Receipt size={18}/> Riwayat
-            </button>
-          </nav>
-          <button className="flex items-center gap-3 px-4 py-3 text-red-400 font-bold text-sm hover:bg-red-50 rounded-xl transition-all mt-auto">
-            <LogOut size={18}/> Logout
-          </button>
-        </div>
-      </aside>
+        )}
+      </AnimatePresence>
 
-      {/* --- AREA TENGAH --- */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50">
-        <header className="p-4 lg:p-6 space-y-4 pt-[max(1rem,env(safe-area-inset-top))]">
-          <div className="flex items-center justify-between gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-3 bg-white border border-slate-100 rounded-xl shadow-sm"><Menu size={20}/></button>
-            <div className="flex-1 max-w-md relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-              {/* Focus ring dirubah */}
-              <input type="text" placeholder="Cari menu..." className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border-none shadow-sm outline-none text-sm focus:ring-2 focus:ring-[#4D3C2A]/20" />
+      {/* Hero Section */}
+      <section className="px-6 md:px-12 pt-32 py-16 grid md:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+        <div>
+          <h2 className="text-5xl md:text-6xl font-extrabold mt-6 leading-[1.1]">
+            Tempat Vespa Kamu <span className="text-orange-600">Makin Slay</span>
+          </h2>
+          <p className="text-slate-600 mt-6 text-lg">
+            Sparepart original, bengkel berpengalaman, harga transparan. Semua untuk Vespa kamu yang satu itu.
+          </p>
+
+          {/* JAM OPERASIONAL - Ikon satu di tengah */}
+          {hasMounted && (
+            <div className="mt-6 flex flex-col gap-2 text-sm font-medium text-slate-500">
+              {/* Label Buka */}
+              <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full w-fit text-[10px] uppercase font-bold mb-2">
+                <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div> 
+                Buka Sekarang
+              </div>
+              
+              {/* Container Ikon + Teks */}
+              <div className="flex items-center gap-2 ml-1">
+                {/* Ikon Jam - Diposisikan di tengah secara vertikal oleh flex-items-center */}
+                <Clock size={20} className="text-orange-600 shrink-0 mr-2" />
+                
+                {/* Kolom teks */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="leading-tight">Senin - Jumat: 09.00 - 18.00 WIB</span>
+                  <span className="leading-tight">Sabtu - Minggu: 09.00 - 15.00 WIB</span>
+                </div>
+              </div>
             </div>
-            {/* Hover dirubah */}
-            <button onClick={toggleFullscreen} className="p-3 bg-white border border-slate-100 text-slate-400 rounded-xl shadow-sm hover:text-[#4D3C2A] hover:border-[#4D3C2A]/10 transition-colors">
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+          )}
+          
+          <div className="mt-8 flex flex-wrap gap-4">
+            <button onClick={openGeneralBooking}
+              suppressHydrationWarning
+              className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-orange-700 transition cursor-pointer"
+            >
+              Booking Servis <ArrowRight size={20}/>
             </button>
-            {/* Tombol Keranjang Mobile Cokelat Tua */}
-            <button onClick={() => setIsCartOpen(true)} className="lg:hidden relative p-3 bg-[#4D3C2A] text-white rounded-xl shadow-lg active:scale-95">
-              <ShoppingCart size={20} />
-              {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white font-black">{cart.length}</span>}
+            <button 
+              suppressHydrationWarning
+              className="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 transition cursor-pointer"
+            >
+              Lihat Produk
             </button>
           </div>
-          {/* Kategori Cokelat Tua */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {categories.map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-5 py-2 rounded-xl text-xs font-black transition-all border-2 ${activeCategory === cat ? 'bg-[#4D3C2A] border-[#4D3C2A] text-white shadow-md' : 'bg-white text-slate-400 border-white hover:border-slate-100'}`}>
-                {cat}
+
+          <div className="mt-12 grid grid-cols-3 md:grid-cols-4 gap-4">
+            {[
+              { val: '500+', label: 'Unit Selesai' },
+              { val: '8+', label: 'Tahun Pengalaman' },
+              { val: '4.9', label: 'Rating Pelanggan' }
+            ].map((s, i) => (
+              <div key={i}>
+                <div className="text-2xl font-black">{s.val}</div>
+                <div className="text-slate-500 text-[10px] uppercase font-bold leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Visual Box */}
+        <div className="relative bg-white p-3 rounded-[2.5rem] shadow-xl border border-slate-100">
+           <div className="w-full h-[300px] md:h-[400px] overflow-hidden rounded-[2rem]">
+             <ImageSlider />
+           </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="px-6 md:px-12 py-20 bg-slate-900 text-white">
+        <div className="text-center mb-16 max-w-7xl mx-auto">
+          <h3 className="text-orange-500 font-bold uppercase tracking-widest text-xl mb-2">Kenapa Kami?</h3>
+          <h2 className="text-4xl font-bold">Bukan Sekadar Bengkel Biasa</h2>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          {[
+            { icon: ShieldCheck, title: "Part Bergaransi", desc: "Sparepart original & aftermarket premium." },
+            { icon: Wrench, title: "Mekanik Ahli", desc: "Tim kami terlatih khusus untuk Vespa modern & klasik." },
+            { icon: Clock, title: "Tepat Waktu", desc: "Estimasi pengerjaan jelas. Tidak molor." },
+            { icon: Zap, title: "Harga Jelas", desc: "Biaya diinformasikan di depan. No surprise." }
+          ].map((item, i) => (
+            <div key={i} className="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+              <item.icon className="text-orange-500 mb-4" size={32} />
+              <h4 className="text-xl font-bold mb-2">{item.title}</h4>
+              <p className="text-slate-400 text-sm">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SECTION: KATALOG PRODUK (Dibuat lebih rapat dengan pb-8 pt-12) */}
+      <section className="pt-16 pb-6 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <div className="description">
+              <h2 className="text-4xl font-extrabold text-slate-900 mb-2">Pilihan <span className="text-orange-600">Slay</span></h2>
+              <p className="text-slate-500">Upgrade performa dan visual Vespamu sekarang.</p>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
+              {["Semua", "Oli", "Aksesoris", "Knalpot"].map((cat) => (
+                <button 
+                  key={cat} 
+                  onClick={() => setFilter(cat)} 
+                  className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
+                    filter === cat ? 'bg-slate-900 text-white' : 'bg-slate-200 hover:bg-slate-300'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="overflow-hidden" ref={emblaRef}>
+              {/* items-stretch: Memastikan semua card memiliki tinggi yang sama */}
+              <div className="flex gap-6 pb-6 items-stretch"> 
+                {filtered.map((p) => {
+                  const discPrice = p.price - (p.price * ((p.disc || 0) / 100));
+                  return (
+                    <div 
+                      key={p.id} 
+                      /* w-[280px]: lebar tetap | flex-shrink-0: tidak akan menyusut | flex-col & justify-between: mensejajarkan tombol bawah */
+                      className="w-[280px] md:w-[300px] flex-shrink-0 bg-white p-4 rounded-[2rem] border border-slate-200 shadow-md flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="h-48 bg-slate-100 rounded-2xl mb-4 relative overflow-hidden">
+                          {p.label && <div className="absolute top-4 left-4 px-3 py-1 bg-orange-600 text-white text-[10px] font-black rounded-full uppercase">{p.label}</div>}
+                          {(p.disc || 0) > 0 && (
+                            <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-black">
+                              -{p.disc}%
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-lg leading-snug">{p.name}</h4>
+                      </div>
+
+                      <div className="flex justify-between items-center mt-4">
+                        <div>
+                          {p.disc > 0 ? (
+                            <>
+                              <span className="font-black text-orange-600 block text-sm">Rp {discPrice.toLocaleString()}</span>
+                              <span className="text-slate-400 text-[10px] line-through">Rp {p.price.toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-black text-slate-900 text-sm">Rp {p.price.toLocaleString()}</span>
+                          )}
+                        </div>
+                        <motion.button 
+                          whileTap={{ scale: 0.8 }}
+                          onClick={(e) => addToCartWithAnimation(e, p)} 
+                          className="bg-slate-900 text-white p-4 rounded-full hover:bg-orange-600 transition"
+                        >
+                          <ShoppingBag size={20} />
+                        </motion.button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {filtered.length > 2 && (
+              <div className="flex justify-end gap-4 mt-8">
+                <button onClick={() => emblaApi?.scrollPrev()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100 cursor-pointer"><ChevronLeft size={20}/></button>
+                <button onClick={() => emblaApi?.scrollNext()} className="p-4 rounded-full border-2 border-slate-200 bg-white outline-none hover:bg-slate-100 cursor-pointer"><ChevronRight size={20}/></button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Layanan Section - Padding Bottom Dikurangi */}
+      <section className="px-6 pt-4 pb-8 max-w-7xl mx-auto">
+        <div className="mb-12">
+          <span className="text-orange-500 font-bold uppercase text-sm">Layanan Bengkel</span>
+          <h2 className="text-4xl font-bold mt-2">Titip Vespamu, <br/><span className="text-orange-600">Kami Urus Semuanya</span></h2>
+        </div>
+
+        {/* PILIH TIPE */}
+        <div className="mb-10">
+          <span className="text-slate-400 font-bold uppercase text-xs tracking-widest mb-4 block">1. Pilih Tipe Vespa</span>
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar">
+            {listVespa.map((item) => (
+              <button key={item.name} suppressHydrationWarning onClick={() => setSelectedVespa(item.name)}
+                className={`min-w-[220px] md:min-w-[280px] p-6 rounded-2xl border-2 transition-all text-left relative snap-start ${selectedVespa === item.name ? 'border-orange-600 bg-orange-50' : 'border-slate-200 bg-white hover:border-orange-300'}`}>
+                <h4 className={`font-bold ${selectedVespa === item.name ? 'text-orange-700' : 'text-slate-800'}`}>{item.name}</h4>
+                {selectedVespa === item.name && <Check className="absolute right-4 top-4 text-orange-600" size={20} />}
               </button>
             ))}
           </div>
-        </header>
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {products.filter(p => activeCategory === "All" || p.category === activeCategory).map((p) => {
-              const displayPrice = typeof p.prices === 'number' ? p.prices : p.prices.Small;
-              return (
-                <div key={p.id} className="bg-white p-3 rounded-[32px] shadow-sm border border-slate-50 flex flex-col hover:shadow-lg transition-shadow">
-                  <div className="aspect-square mb-3 rounded-[24px] overflow-hidden bg-slate-100"><img src={p.image} className="w-full h-full object-cover" alt="" /></div>
-                  <h3 className="font-bold text-slate-800 text-sm mb-1 truncate px-1">{p.name}</h3>
-                  {/* Harga Teks Cokelat Tua */}
-                  <p className="text-[#4D3C2A] font-black text-xs mb-3 px-1">Rp {displayPrice.toLocaleString()}</p>
-                  {/* Tombol TAMBAH Cokelat Tua (Variant Terang) */}
-                  <button onClick={() => openModal(p)} className="w-full py-3 rounded-xl font-black text-[10px] bg-[#4D3C2A]/5 text-[#4D3C2A] border border-[#4D3C2A]/10 hover:bg-[#4D3C2A] hover:text-white transition-all active:scale-95 mt-auto">+ TAMBAH</button>
+        {/* PILIH LAYANAN */}
+        <div className="mb-10">
+          <span className="text-slate-400 font-bold uppercase text-xs tracking-widest mb-4 block">2. Pilih Layanan</span>
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar">
+            {listLayanan.map((item) => (
+              <button key={item.title} suppressHydrationWarning onClick={() => setSelectedLayanan(item)}
+                className={`min-w-[250px] p-8 rounded-3xl border-2 transition-all text-left flex flex-col justify-between snap-start ${selectedLayanan?.title === item.title ? 'border-orange-600 bg-orange-600 text-white' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                <div>
+                  <h4 className="text-2xl font-bold mb-4">{item.title}</h4>
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold inline-block mb-4 ${selectedLayanan?.title === item.title ? 'bg-white/20' : 'bg-slate-100'}`}>{item.time}</span>
                 </div>
-              );
-            })}
+                <span className="font-black text-lg block">Mulai {item.displayPrice}</span>
+              </button>
+            ))}
           </div>
         </div>
-      </main>
 
-      {/* --- ORDER DETAIL --- */}
-      <aside className={`fixed lg:static inset-y-0 right-0 w-full sm:w-80 lg:w-96 bg-white border-l border-slate-100 z-[120] transition-transform duration-300 flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
-        <div className="h-full flex flex-col pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <div className="p-6 flex justify-between items-center border-b">
-            <h2 className="font-black text-xl text-slate-800">Detail Pesanan</h2>
-            <button onClick={() => setIsCartOpen(false)} className="lg:hidden p-2 text-slate-400 bg-slate-50 rounded-full"><X size={20}/></button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-6 space-y-3 py-4 scrollbar-hide">
-            {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-200 opacity-60"><ShoppingCart size={40} className="mb-4" /><p className="text-xs font-bold text-slate-400">Keranjang Kosong</p></div>
-            ) : (
-              cart.map((item) => (
-                <div key={item.orderId} className="bg-slate-50 p-4 rounded-[24px] border border-slate-100 flex flex-col">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1">
-                      <p className="font-black text-xs text-slate-800 leading-tight mb-1">{item.name}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {/* Variant Cokelat Tua di dalam Keranjang */}
-                        <span className="px-1.5 py-0.5 bg-white text-[#4D3C2A] text-[8px] font-black rounded border border-[#4D3C2A]/10 uppercase">{item.size}</span>
-                        <span className="px-1.5 py-0.5 bg-white text-blue-500 text-[8px] font-black rounded border border-blue-50 uppercase">{item.sugar} Sugar</span>
-                        <span className="px-1.5 py-0.5 bg-white text-cyan-600 text-[8px] font-black rounded border border-cyan-50 uppercase">{item.ice} Ice</span>
-                        {item.toppings.map((t: string) => (<span key={t} className="px-1.5 py-0.5 bg-white text-slate-500 text-[8px] font-bold rounded border border-slate-100 uppercase">+ {t}</span>))}
-                      </div>
-                      {item.note && <p className="text-[9px] text-slate-400 mt-1 font-medium italic">Note: {item.note}</p>}
-                    </div>
-                    {/* Hover dirubah */}
-                    <button onClick={() => openModal(products.find(p => p.id === item.id), item)} className="p-1.5 text-slate-300 hover:text-[#4D3C2A] hover:bg-white rounded-xl transition-all"><Edit3 size={14}/></button>
-                  </div>
-                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200/40">
-                    <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-lg px-2 py-0.5 shadow-sm">
-                      <button onClick={() => updateCartQty(item.orderId, -1)} className="p-1 text-slate-400 hover:text-red-500 transition-colors">
-                        {item.quantity === 1 ? <Trash2 size={12}/> : <Minus size={12}/>}
-                      </button>
-                      <span className="text-xs font-black text-slate-800 w-3 text-center">{item.quantity}</span>
-                      {/* Plus dirubah Cokelat */}
-                      <button onClick={() => updateCartQty(item.orderId, 1)} className="p-1 text-[#4D3C2A] hover:bg-[#4D3C2A]/5 rounded-md"><Plus size={12}/></button>
-                    </div>
-                    <p className="font-black text-xs text-slate-800">Rp {(item.unitPrice * item.quantity).toLocaleString()}</p>
-                  </div>
+      {/* MODAL: FORM BOOKING */}
+      <AnimatePresence>
+        {isBookingModalOpen && (
+
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[85vh]"
+            >
+
+              {/* HEADER (TIDAK IKUT SCROLL) */}
+              <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
+
+                <div>
+                  <h3 className="font-black text-2xl text-slate-900">
+                    Form Booking
+                  </h3>
+
+                  <p className="text-slate-500 text-sm">
+                    Tentukan jadwal kedatanganmu.
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
-          <div className="p-6 bg-white border-t border-dashed border-slate-200 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <div className="space-y-2 mb-6 text-sm">
-              <div className="flex justify-between items-center"><span className="font-black text-slate-400 text-[10px]">TOTAL ITEMS</span><span className="font-black text-slate-800 text-xs">{cart.reduce((a, b) => a + b.quantity, 0)} Gelas</span></div>
-              {/* Total Teks Cokelat Tua */}
-              <div className="flex justify-between items-center"><span className="font-black text-slate-800">TOTAL BAYAR</span><span className="font-black text-xl text-[#4D3C2A] tracking-tighteritalic">Rp {totalBill.toLocaleString()}</span></div>
-            </div>
-            {/* Tombol Konfirmasi Cokelat Tua */}
-            <button className="w-full py-4 bg-[#4D3C2A] text-white rounded-[20px] font-black text-xs shadow-xl shadow-[#4D3C2A]/10 hover:bg-[#4D3C2A]/90 transition-all active:scale-95 disabled:bg-slate-100 disabled:text-slate-300 uppercase tracking-widest" disabled={cart.length === 0}>Konfirmasi Pesanan</button>
-          </div>
-        </div>
-      </aside>
 
-      {/* --- KUSTOM MODAL --- */}
-      {selectedProduct && (
-        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-end lg:items-center justify-center p-0 lg:p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full h-[90%] lg:h-auto lg:max-h-[90vh] lg:max-w-md lg:rounded-[40px] rounded-t-[40px] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-500">
-            <div className="p-6 flex justify-between items-center bg-white border-b border-slate-50 sticky top-0 z-10">
-              <div>
-                <h3 className="font-black text-lg text-slate-800">{isEditing ? 'Ubah' : 'Kustom'} {selectedProduct.name}</h3>
-                <p className="text-orange-500 font-bold tracking-widest text-[10px] uppercase mt-0.5">Kustomisasi Menu</p>
+                <button
+                  onClick={() => setIsBookingModalOpen(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition"
+                >
+                  <X size={24} />
+                </button>
+
               </div>
-              <button onClick={() => setSelectedProduct(null)} className="p-2 bg-slate-50 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 transition-all"><X size={20}/></button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
-              {/* Ukuran */}
-              {hasMultipleSizes(selectedProduct) && (
-                <section>
-                  <label className="block font-black text-slate-400 text-[9px] mb-3 uppercase tracking-widest">Ukuran Gelas</label>
-                  {/* Variant Cokelat Tua untuk Tombol Pilihan */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {["Small", "Big"].map((size) => (
-                      <button key={size} onClick={() => setSelectedSize(size)} className={`py-3 rounded-xl font-black text-xs border-2 transition-all ${selectedSize === size ? 'border-[#4D3C2A] bg-[#4D3C2A]/5 text-[#4D3C2A]' : 'border-slate-50 text-slate-400 hover:border-slate-100'}`}>{size}</button>
-                    ))}
-                  </div>
-                </section>
-              )}
 
-              {/* Gula & Es */}
-              <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-100 py-6 my-6">
-                <section>
-                  <label className="flex items-center gap-1 font-black text-slate-400 text-[9px] mb-3 uppercase tracking-widest"><Droplets size={10} className="text-blue-400"/> Sugar Level</label>
-                  <div className="flex flex-col gap-2">
-                    {["Normal", "Less"].map((s) => (
-                      <button key={s} onClick={() => setSelectedSugar(s)} className={`py-2.5 px-3 rounded-xl font-bold text-[11px] border-2 text-left flex justify-between items-center transition-all ${selectedSugar === s ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-inner' : 'border-slate-50 text-slate-400 hover:border-slate-100'}`}>{s} {selectedSugar === s && <Check size={14} strokeWidth={4}/>}</button>
-                    ))}
+              {/* BODY FORM (YANG SCROLL) */}
+              <div className="overflow-y-auto p-6 space-y-4">
+
+                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+
+                  {/* NAMA + WA */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        Nama
+                      </label>
+
+                      <input
+                        type="text"
+                        placeholder="Budi"
+                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        WhatsApp
+                      </label>
+
+                      <input
+                        type="tel"
+                        placeholder="0812..."
+                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none"
+                      />
+                    </div>
+
                   </div>
-                </section>
-                <section>
-                  <label className="flex items-center gap-1 font-black text-slate-400 text-[9px] mb-3 uppercase tracking-widest"><IceCream size={10} className="text-cyan-400"/> Ice Level</label>
-                  <div className="flex flex-col gap-2">
-                    {["Normal", "Less"].map((i) => (
-                      <button key={i} onClick={() => setSelectedIce(i)} className={`py-2.5 px-3 rounded-xl font-bold text-[11px] border-2 text-left flex justify-between items-center transition-all ${selectedIce === i ? 'border-cyan-500 bg-cyan-50 text-cyan-600 shadow-inner' : 'border-slate-50 text-slate-400 hover:border-slate-100'}`}>{i} {selectedIce === i && <Check size={14} strokeWidth={4}/>}</button>
-                    ))}
+
+                  {/* HARI + JAM */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        Hari Kedatangan
+                      </label>
+
+                      <input
+                        type="date"
+                        className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+                        Jam Datang
+                      </label>
+
+                      <div className="relative">
+                        <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-orange-500 outline-none appearance-none">
+
+                          {jamOperasional.map((jam) => (
+                            <option key={jam} value={jam}>
+                              {jam} WIB
+                            </option>
+                          ))}
+
+                        </select>
+
+                        <Clock
+                          size={16}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+
+                      </div>
+
+                    </div>
+
                   </div>
-                </section>
+
+                  {/* CARD DP */}
+                  {isPayDP && selectedLayanan && (
+
+                    <div className="bg-orange-50 border-2 border-orange-100 rounded-3xl p-5 mt-4">
+
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-sm font-bold text-orange-800">
+                          {selectedLayanan.title}
+                        </span>
+
+                        <span className="text-[10px] font-black bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full uppercase">
+                          DP 20%
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+
+                        <div className="pb-3 sm:pb-0 border-b sm:border-none border-orange-200">
+                          <p className="text-[10px] text-orange-600 font-bold uppercase">
+                            Bayar Sekarang
+                          </p>
+
+                          <p className="text-2xl font-black text-orange-700">
+                            {formatCurrency(totalHarga * 0.2)}
+                          </p>
+                        </div>
+
+                        <div className="sm:text-right">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">
+                            Sisa Pelunasan
+                          </p>
+
+                          <p className="text-sm font-bold text-slate-600">
+                            {formatCurrency(totalHarga * 0.8)}
+                          </p>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+                  {/* BUTTON */}
+                  <div className="pt-4">
+
+                    <button className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-orange-600 transition flex items-center justify-center gap-3">
+
+                      {isPayDP ? (
+                        <>
+                          <CreditCard size={20}/>
+                          Bayar DP Sekarang
+                        </>
+                      ) : (
+                        "Konfirmasi Booking"
+                      )}
+
+                    </button>
+
+                  </div>
+
+                </form>
+
+              </div>
+
+            </motion.div>
+
+          </div>
+
+        )}
+      </AnimatePresence>
+
+        {/* BOX ESTIMASI */}
+        <AnimatePresence>
+          {selectedVespa && selectedLayanan && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+              className="bg-slate-900 p-8 rounded-3xl text-white flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Estimasi Total ({selectedVespa})</p>
+                <h3 className="text-xl font-bold">{selectedLayanan.title}</h3>
+              </div>
+              <div className="text-left md:text-right">
+                <p className="text-orange-500 font-black text-3xl">{formatCurrency(totalHarga)}</p>
+                <button onClick={openDPBooking} className="mt-3 bg-orange-600 px-8 py-2.5 rounded-xl font-bold hover:bg-orange-700 transition w-full md:w-auto text-sm cursor-pointer">Booking Sekarang</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      {/* SECTION: ARMADA JEMPUT - Padding Top Dikurangi agar Rapat */}
+      <section className="px-6 pt-4 pb-16 max-w-7xl mx-auto">
+        <div className="mb-8 border-t border-slate-200 pt-10">
+          <h2 className="text-2xl font-bold">Ambil di Rumah (Pick-up)</h2>
+          <p className="text-slate-500 text-sm">Layanan antar-jemput Vespa langsung ke depan pintu.</p>
+        </div>
+        
+        <div className="relative mb-8 max-w-2xl">
+          <MapPin className="absolute left-4 top-4 text-orange-500" size={20} />
+          <input readOnly onClick={() => setIsModalOpen(true)} value={alamat || "Masukkan lokasi penjemputan..."} className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-orange-500 outline-none transition text-sm" />
+        </div>
+
+        {/* MODAL ALAMAT */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-xl">Atur Lokasi Jemput</h3>
+                <button onClick={() => setIsModalOpen(false)}><X size={20}/></button>
               </div>
               
-              {/* Topping */}
-              <section>
-                <label className="block font-black text-slate-400 text-[9px] mb-3 uppercase tracking-widest">Topping Tambahan</label>
-                <div className="space-y-2">
-                  {toppingsData.map((t) => (
-                    <div key={t.name} onClick={() => setSelectedToppings(prev => prev.includes(t.name) ? prev.filter(x => x !== t.name) : [...prev, t.name])} className={`flex justify-between items-center p-3.5 rounded-2xl cursor-pointer border-2 transition-all active:scale-[0.98] ${selectedToppings.includes(t.name) ? 'border-[#4D3C2A] bg-[#4D3C2A]/5' : 'border-slate-50 hover:border-slate-100'}`}>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-xs text-slate-700">{t.name}</span>
-                        {/* Harga Topping Cokelat Tua */}
-                        <span className="font-black text-[#4D3C2A] text-[9px]">+ Rp {t.price.toLocaleString()}</span>
-                      </div>
-                      {/* Checkbox Cokelat Tua */}
-                      <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${selectedToppings.includes(t.name) ? 'bg-[#4D3C2A] border-[#4D3C2A] text-white' : 'border-slate-100 bg-white'}`}>{selectedToppings.includes(t.name) && <Check size={12} strokeWidth={4} />}</div>
-                    </div>
-                  ))}
+              <input 
+                onChange={(e) => setAlamat(e.target.value)} 
+                placeholder="Ketik alamat..." 
+                className="w-full p-4 border-2 border-slate-200 focus:border-orange-500 outline-none transition rounded-xl mb-6" 
+                value={alamat}
+              />
+
+              <div className="flex justify-between items-center p-4 bg-slate-100 rounded-2xl">
+                <span className="text-sm font-semibold truncate w-1/2">{alamat || "Belum ada alamat"}</span>
+                
+                {/* Jam yang sudah dibesarkan dan rounded */}
+                <div className="flex items-center gap-1.5 px-4 py-3 bg-white rounded-full border border-slate-200 shadow-sm w-32 justify-center">
+                  <Clock size={16} className="text-orange-600" />
+                  <select 
+                    value={waktu}
+                    onChange={(e) => setWaktu(e.target.value)}
+                    className="bg-transparent outline-none cursor-pointer text-sm font-bold text-orange-500 appearance-none text-center w-full"
+                  >
+                    {jamOperasional.map((jam) => (
+                      <option key={jam} value={jam}>{jam}</option>
+                    ))}
+                  </select>
                 </div>
-              </section>
+              </div>
 
-              {/* Catatan - Focus Cokelat */}
-              <section>
-                <label className="flex items-center gap-1 font-black text-slate-400 text-[9px] mb-3 uppercase tracking-widest"><StickyNote size={10}/> Catatan Tambahan</label>
-                <textarea 
-                  value={orderNote} 
-                  onChange={(e) => setOrderNote(e.target.value)}
-                  placeholder="Contoh: Sedotan dikurangi, jangan pakai plastik..."
-                  className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xs outline-none focus:border-[#4D3C2A]/30 min-h-[80px] resize-none transition-colors"
-                />
-              </section>
-            </div>
+              <button onClick={() => setIsModalOpen(false)} className="w-full mt-6 bg-orange-600 text-white py-4 rounded-xl font-bold hover:bg-orange-700">Simpan Lokasi</button>
+            </motion.div>
+          </div>
+        )}
 
-            <div className="p-6 border-t bg-slate-50 sticky bottom-0 z-10 pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:pb-6">
-              {/* Tombol Simpan Akhir Cokelat Tua */}
-              <button onClick={confirmAddToCart} className="w-full py-4 bg-[#4D3C2A] text-white rounded-2xl font-black shadow-xl shadow-[#4D3C2A]/10 uppercase tracking-widest text-[10px] active:scale-95 transition-all">Simpan & Tambahkan</button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { name: 'Motor Towing', icon: Bike, desc: 'Solusi cepat untuk servis ringan.', cap: 'Max 1 Unit' },
+            { name: 'Pickup L300', icon: Truck, desc: 'Standar angkut Vespa yang aman.', cap: 'Max 3 Unit' },
+            { name: 'Blind Van', icon: Car, desc: 'Privasi & terlindung cuaca.', cap: 'Premium' }
+          ].map((armada) => (
+            <div key={armada.name} className="group border-2 border-slate-200 p-6 rounded-3xl hover:border-orange-500 hover:shadow-md transition cursor-pointer bg-white">
+              <armada.icon className="text-orange-500 mb-3" size={28} />
+              <h3 className="font-bold text-base">{armada.name}</h3>
+              <p className="text-xs text-slate-500 mt-1">{armada.desc}</p>
+              <div className="mt-4 pt-4 border-t border-slate-50 text-[10px] font-bold text-orange-600 uppercase tracking-wider">{armada.cap}</div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SECTION: TESTIMONI */}
+      <section className="px-6 py-20 bg-white max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-block px-4 py-1 rounded-full bg-orange-50 text-orange-600 font-bold text-xs uppercase tracking-widest mb-4">Pelanggan Bicara</div>
+          <h2 className="text-4xl font-bold">Kata Mereka Soal <span className="text-orange-600">VesBooth</span></h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            { name: 'Rizal A.', vespa: 'Vespa PX 125', text: 'Restorasi PX-ku selesai sempurna. Setiap detail diperhatiin, beneran worth it banget!', initial: 'RA' },
+            { name: 'Dinda S.', vespa: 'Vespa GTS 150', text: 'Servis rutin di sini selalu oke. Mekaniknya jujur, harganya transparan. Pokoknya recommended!', initial: 'DS' },
+            { name: 'Bagas K.', vespa: 'Vespa Primavera', text: 'Custom build pertamaku sukses. Konsepnya dieksekusi persis seperti yang gue mau. Grazie!', initial: 'BK' }
+          ].map((review, i) => (
+            <div key={i} className="p-8 rounded-3xl border border-slate-200 hover:shadow-xl transition-all bg-white">
+              <div className="text-orange-400 mb-4 text-lg">★★★★★</div>
+              <p className="text-slate-600 mb-8 italic">"{review.text}"</p>
+              <div className="flex items-center gap-4 border-t pt-6">
+                <div className="w-12 h-12 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold">{review.initial}</div>
+                <div>
+                  <h4 className="font-bold text-slate-800">{review.name}</h4>
+                  <p className="text-xs text-slate-400">{review.vespa}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SECTION: METODE PEMBAYARAN */}
+      <section className="px-6 py-10 border-t border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="text-center md:text-left">
+            <h4 className="font-bold text-slate-800 text-sm">Metode Pembayaran</h4>
+            <p className="text-xs text-slate-500">Transaksi aman & terpercaya.</p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
+            {/* BCA */}
+            <span className="font-black text-xl tracking-tighter" style={{ color: '#0060AA' }}>BCA</span>
+            
+            {/* BNI */}
+            <span className="font-black text-xl tracking-tighter" style={{ color: '#F68B1F' }}>BNI</span>
+            
+            {/* OVO */}
+            <span className="font-bold text-white px-2 py-0.5 rounded text-xs tracking-wider" style={{ backgroundColor: '#4E2A84' }}>OVO</span>
+            
+            {/* GOPAY */}
+            <span className="font-black text-lg tracking-tighter" style={{ color: '#00ADEF' }}>GoPay</span>
+            
+            {/* QRIS - Hitam Standar */}
+            <div className="border border-slate-300 px-2 py-0.5 rounded shadow-sm">
+              <span className="font-black text-black text-xs tracking-tighter uppercase">QRIS</span>
+            </div>
+            
+            {/* MANDIRI */}
+            <span className="font-bold text-lg tracking-tighter" style={{ color: '#005197' }}>mandiri</span>
           </div>
         </div>
-      )}
-    </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-950 text-slate-400 py-16 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
+          <div>
+            <h1 className="text-2xl font-black text-orange-600 mb-4">VesBooth.</h1>
+            <p className="text-xs leading-relaxed">Spesialis restorasi dan servis Vespa terpercaya di Bandung. Jadikan Vespamu selalu prima dan tetap slay.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-4 text-sm">Navigasi</h4>
+            <ul className="space-y-2 text-xs">
+              {['Layanan', 'Produk Original', 'Galeri Restorasi', 'Lokasi Bengkel'].map((item) => (
+                <li key={item}><a href="#" className="hover:text-orange-500 transition">{item}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-4 text-sm">Kontak</h4>
+            <ul className="space-y-2 text-xs font-mono">
+              <li>WA: 0812-3456-7890</li>
+              <li>IG: @vesbooth.id</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-bold mb-4 text-sm">Workshop</h4>
+            <p className="text-xs leading-relaxed font-mono text-slate-500">Jl. Vespa No. 12, Ciputat<br/>Tangerang Selatan, 15412</p>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-900 text-center text-[10px] tracking-widest uppercase">
+          <p>© 2026 VesBooth Garage. All rights reserved.</p>
+        </div>
+      </footer>
+    </main>
   );
 }
