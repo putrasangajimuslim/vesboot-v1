@@ -46,7 +46,7 @@ export default function ImageSlider() {
         {images.map((_, i) => (
           <div 
             key={i} 
-            className={`h-1 rounded-full transition-all duration-300 ${i === index ? 'w-4 bg-orange-600' : 'w-1 bg-slate-300'}`}
+            className={`h-1 rounded-full transition-all duration-300 ${i === index ? 'w-4 bg-blue-600' : 'w-1 bg-slate-300'}`}
           />
         ))}
       </div>
