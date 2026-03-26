@@ -357,6 +357,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ✅ SECTION BARU: LACAK SERVICE */}
+      <section className="px-6 py-16 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+
+          <h3 className="text-orange-600 font-bold uppercase tracking-widest text-sm mb-2">
+            Tracking Service
+          </h3>
+
+          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
+            Lacak Status Servis Vespa Kamu
+          </h2>
+
+          <p className="text-slate-500 mb-8 text-sm md:text-base">
+            Masukkan ID order untuk melihat progress pengerjaan Vespa kamu secara real-time.
+          </p>
+
+          <div className="relative max-w-xl mx-auto">
+            <input
+              type="text"
+              placeholder="Contoh: #VB-2026-001"
+              className="w-full p-5 pr-16 rounded-2xl border-2 border-slate-200 focus:border-orange-500 outline-none font-bold text-sm"
+            />
+
+            <button
+              onClick={() => setIsTrackingModalOpen(true)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-orange-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-orange-700 transition flex items-center gap-2"
+            >
+              <Search size={18} />
+              Lacak
+            </button>
+          </div>
+
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section className="px-6 md:px-12 py-20 bg-slate-900 text-white">
         <div className="text-center mb-16 max-w-7xl mx-auto">
