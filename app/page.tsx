@@ -54,6 +54,9 @@ export default function Home() {
 
   const [cartCount, setCartCount] = useState(0);
 
+  const [trackingId, setTrackingId] = useState("");
+  const [trackingData, setTrackingData] = useState<any>(null);
+
   const listVespa: VespaType[] = [
     { name: 'Klasik (PX, Sprint, dll)', multiplier: 1 }, 
     { name: 'Modern (Primavera, LX)', multiplier: 1.15 }, 
@@ -80,6 +83,31 @@ export default function Home() {
     { id: 4, name: "Handle Grip Premium", price: 350000, label: "Baru", disc: 5, category: "Aksesoris" },
     { id: 5, name: "Handle Grip Standar", price: 150000, label: "Baru", disc: 2, category: "Aksesoris" },
   ];
+
+  const dummyTracking = {
+    "#VB-2026-001": {
+      name: "Budi",
+      vespa: "Vespa Primavera",
+      service: "Servis Rutin",
+      status: 2,
+      steps: [
+        { label: "Antri", date: "20 Mar 2026" },
+        { label: "Dikerjakan", date: "21 Mar 2026" },
+        { label: "Quality Check", date: "-" },
+        { label: "Selesai", date: "-" },
+      ],
+    }
+  };
+
+  // ================= FUNCTION =================
+  const handleTracking = () => {
+    const data = dummyTracking[trackingId as keyof typeof dummyTracking];
+    if (data) {
+      setTrackingData(data);
+    } else {
+      alert("ID tidak ditemukan");
+    }
+  };
 
   const updateQty = (id: number, delta: number) => {
     setCartItems(prev => prev.map(item => {
@@ -357,39 +385,88 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ✅ SECTION BARU: LACAK SERVICE */}
-      <section className="px-6 py-16 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
+      {/* ================= TRACKING SECTION ================= */}
+      <section className="py-16 bg-white rounded-3xl shadow max-w-4xl mx-auto p-6">
+        
+        <h3 className="text-orange-600 font-bold uppercase text-sm mb-2 text-center">
+          Tracking Service
+        </h3>
 
-          <h3 className="text-orange-600 font-bold uppercase tracking-widest text-sm mb-2">
-            Tracking Service
-          </h3>
+        <h2 className="text-3xl font-extrabold text-center mb-4">
+          Lacak Status Servis Vespa Kamu
+        </h2>
 
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
-            Lacak Status Servis Vespa Kamu
-          </h2>
+        <p className="text-slate-500 text-center mb-8">
+          Masukkan ID order untuk melihat progress servis.
+        </p>
 
-          <p className="text-slate-500 mb-8 text-sm md:text-base">
-            Masukkan ID order untuk melihat progress pengerjaan Vespa kamu secara real-time.
-          </p>
+        {/* INPUT */}
+        <div className="relative max-w-xl mx-auto">
+          <input
+            value={trackingId}
+            onChange={(e) => setTrackingId(e.target.value)}
+            placeholder="Contoh: #VB-2026-001"
+            className="w-full p-5 pr-16 rounded-2xl border-2 border-slate-200 focus:border-orange-500 outline-none font-bold text-sm"
+          />
 
-          <div className="relative max-w-xl mx-auto">
-            <input
-              type="text"
-              placeholder="Contoh: #VB-2026-001"
-              className="w-full p-5 pr-16 rounded-2xl border-2 border-slate-200 focus:border-orange-500 outline-none font-bold text-sm"
-            />
-
-            <button
-              onClick={() => setIsTrackingModalOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-orange-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-orange-700 transition flex items-center gap-2"
-            >
-              <Search size={18} />
-              Lacak
-            </button>
-          </div>
-
+          <button
+            onClick={handleTracking}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-orange-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-orange-700 transition flex items-center gap-2"
+          >
+            <Search size={18} />
+            Lacak
+          </button>
         </div>
+
+        {/* ================= HASIL TRACKING ================= */}
+        {trackingData && (
+          <div className="mt-10 border border-slate-200 rounded-3xl p-6 shadow-lg">
+
+            <h4 className="font-bold text-lg mb-2">Detail Servis</h4>
+            <p className="text-sm text-slate-500 mb-6">
+              {trackingId} • {trackingData.vespa}
+            </p>
+
+            {/* PROGRESS BAR */}
+            <div className="w-full bg-slate-200 h-2 rounded-full mb-6">
+              <div
+                className="bg-orange-600 h-2 rounded-full transition-all"
+                style={{ width: `${(trackingData.status + 1) * 25}%` }}
+              />
+            </div>
+
+            {/* TIMELINE */}
+            <div className="space-y-4">
+              {trackingData.steps.map((step: any, i: number) => {
+                const isActive = i <= trackingData.status;
+
+                return (
+                  <div key={i} className="flex items-center gap-4">
+
+                    <div className={`w-4 h-4 rounded-full ${
+                      isActive ? "bg-orange-600" : "bg-slate-300"
+                    }`} />
+
+                    <div className="flex justify-between w-full text-sm">
+                      <span className={`font-bold ${
+                        isActive ? "text-slate-900" : "text-slate-400"
+                      }`}>
+                        {step.label}
+                      </span>
+
+                      <span className="text-slate-400 text-xs">
+                        {step.date}
+                      </span>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
+
       </section>
 
       {/* Features Grid */}
