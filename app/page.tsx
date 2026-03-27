@@ -170,6 +170,9 @@ export default function Home() {
     const button = e.currentTarget as HTMLElement;
     const cartIcon = cartIconRef.current;
     if (cartIcon && button) {
+      console.log("Button:", button);
+      console.log("Cart Icon:", cartIcon);
+
       const btnRect = button.getBoundingClientRect();
       const cartRect = cartIcon.getBoundingClientRect();
       const flyEl = document.createElement("div");
@@ -232,39 +235,39 @@ export default function Home() {
               </div>
 
               <AnimatePresence>
-              {isCartOpen && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="fixed top-[85px] right-6 w-80 bg-white shadow-2xl rounded-[2rem] p-6 z-[90]"
-                >
-                  {totalQty === 0 ? (
-                  <p className="text-slate-400 font-bold text-center py-10">Keranjang masih kosong.</p>
-                ) : (
-                  <>
-                    <p className="font-black text-sm mb-4">({totalQty}) produk yang dipilih</p>
-                    <div className="space-y-4 mb-4">
-                      {cartItems.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-sm font-bold pb-2">
-                          <div className="flex flex-col">
-                            <span>{item.name}</span>
-                            <span className="text-orange-600">Rp {item.price.toLocaleString()}</span>
+                {isCartOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                    className="fixed top-[85px] right-6 w-80 bg-white shadow-2xl rounded-[2rem] p-6 z-[90]"
+                  >
+                    {totalQty === 0 ? (
+                    <p className="text-slate-400 font-bold text-center py-10">Keranjang masih kosong.</p>
+                  ) : (
+                    <>
+                      <p className="font-black text-sm mb-4">({totalQty}) produk yang dipilih</p>
+                      <div className="space-y-4 mb-4">
+                        {cartItems.map(item => (
+                          <div key={item.id} className="flex justify-between items-center text-sm font-bold pb-2">
+                            <div className="flex flex-col">
+                              <span>{item.name}</span>
+                              <span className="text-orange-600">Rp {item.price.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => updateQty(item.id, -1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Minus size={14}/></button>
+                              <span>{item.qty}</span>
+                              <button onClick={() => updateQty(item.id, 1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Plus size={14}/></button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateQty(item.id, -1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Minus size={14}/></button>
-                            <span>{item.qty}</span>
-                            <button onClick={() => updateQty(item.id, 1)} className="p-1 bg-slate-100 rounded-lg cursor-pointer"><Plus size={14}/></button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t pt-4 font-black flex justify-between text-lg">
-                      <span>Total</span><span>Rp {totalPrice.toLocaleString()}</span>
-                    </div>
-                    <button className="w-full mt-4 bg-orange-600 text-white py-3 rounded-2xl font-black cursor-pointer">Checkout Sekarang</button>
-                  </>
+                        ))}
+                      </div>
+                      <div className="border-t pt-4 font-black flex justify-between text-lg">
+                        <span>Total</span><span>Rp {totalPrice.toLocaleString()}</span>
+                      </div>
+                      <button className="w-full mt-4 bg-orange-600 text-white py-3 rounded-2xl font-black cursor-pointer">Checkout Sekarang</button>
+                    </>
+                  )}
+                  </motion.div>
                 )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </AnimatePresence>
             </div>
 
             <button className="md:hidden p-2 text-slate-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -868,7 +871,7 @@ export default function Home() {
       </section>
 
       {/* SECTION: ARMADA JEMPUT - Padding Top Dikurangi agar Rapat */}
-      <section className="px-6 py-20 max-w-6xl mx-auto">
+      <section className="px-6 pt-4 pb-8 max-w-6xl mx-auto">
 
         {/* HEADER */}
         <div className="mb-12 text-center">
