@@ -10,6 +10,9 @@ interface Product {
   label: string;
   disc: number;
   category: string;
+  description: string;
+  stock: string;
+  badge?: 'SALE' | 'HOT' | 'NEW';
 }
 
 interface ProductCatalogProps {

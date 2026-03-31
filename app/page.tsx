@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type MouseEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Search } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -275,7 +275,7 @@ export default function Home() {
     dragFree: true 
   }, [Autoplay({ delay: 3000 })]);
 
-  const addToCartWithAnimation = (e: React.MouseEvent, product: Product) => {
+  const addToCartWithAnimation = (e: MouseEvent<HTMLButtonElement>, product: Product) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
