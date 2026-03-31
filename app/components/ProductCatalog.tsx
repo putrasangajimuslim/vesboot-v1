@@ -108,7 +108,7 @@ export default function ProductCatalog({ filtered, filter, onFilterChange, embla
               <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
                 <button
                   onClick={() => emblaApi?.scrollPrev()}
-                  className="ml-2 p-3 bg-white shadow-xl rounded-full hover:bg-orange-600 hover:text-white transition"
+                  className="ml-2 p-3 bg-white cursor-pointer shadow-xl rounded-full hover:bg-orange-600 hover:text-white transition"
                 >
                   <ChevronLeft size={20} />
                 </button>

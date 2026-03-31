@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Bolt, Check, Paintbrush, Sparkles, Wrench } from 'lucide-react';
 
 interface Layanan {
   title: string;
@@ -42,87 +42,121 @@ const formatCurrency = (val: number) => {
   }).format(val);
 };
 
+const getServiceIcon = (title: string) => {
+  switch (title) {
+    case 'Servis Rutin':
+      return <Sparkles size={18} className="text-orange-500" />;
+    case 'Restorasi Total':
+      return <Paintbrush size={18} className="text-orange-500" />;
+    case 'Custom Build':
+      return <Wrench size={18} className="text-orange-500" />;
+    case 'Body Repair & Cat':
+      return <Paintbrush size={18} className="text-orange-500" />;
+    case 'Upgrade Performa':
+      return <Bolt size={18} className="text-orange-500" />;
+    default:
+      return <Sparkles size={18} className="text-orange-500" />;
+  }
+};
+
 export default function ServiceSection({ listLayanan, selectedLayanan, onSelectLayanan, listVespa, selectedVespa, onSelectVespa, totalHarga, optionalAddOns, selectedAddOnIds, onToggleAddOn, onBookingClick }: ServiceSectionProps) {
   return (
-    <section className="px-6 pt-4 pb-8 max-w-7xl mx-auto">
-      <div className="mb-10 md:mb-12">
-        <span className="text-orange-500 font-bold uppercase text-sm">Layanan Bengkel</span>
-        <h2 className="text-4xl font-bold mt-2">
-          Titip Vespamu, <br /><span className="text-orange-600">Kami Urus Semuanya</span>
-        </h2>
-        <p className="text-slate-500 max-w-2xl mt-3">Pilih paket servis dan tipe motor yang cocok, kami akan atur jadwalnya secara otomatis.</p>
+    <section className="px-6 py-8 max-w-5xl mx-auto space-y-10">
+      <div className="space-y-3 text-center">
+        <p className="text-sm uppercase tracking-[0.35em] text-orange-500 font-semibold">Layanan Bengkel</p>
+        <h2 className="text-3xl font-semibold text-slate-900">Pilih layanan Vespa dengan cepat dan simpel.</h2>
+        <p className="text-sm text-slate-500">Tentukan tipe, paket servis, dan tambahan tanpa ribet. Harga otomatis tampil saat pilihan lengkap.</p>
       </div>
 
-      <div className="mb-8">
-        <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
-          <span className="font-black text-orange-500">1.</span>
-          <span>Tipe Vespa</span>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-600">1</span>
+          <p className="text-sm font-medium text-slate-800">Pilih tipe Vespa</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div className="grid gap-2 sm:grid-cols-2">
           {listVespa.map((item) => {
             const selected = selectedVespa === item.name;
             return (
               <button
                 key={item.name}
                 onClick={() => onSelectVespa(item.name)}
-                className={`rounded-3xl border p-5 text-left transition ${selected ? 'border-orange-500 bg-orange-50 shadow-lg' : 'border-slate-200 bg-white hover:border-orange-300'} `}
+                className={`rounded-3xl border p-3 text-left transition ${selected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-400'}`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <h4 className={`text-base font-semibold ${selected ? 'text-orange-700' : 'text-slate-900'}`}>{item.name}</h4>
-                  {selected && <Check className="text-orange-600" size={20} />}
+                  <div>
+                    <p className={`text-sm font-semibold ${selected ? 'text-orange-700' : 'text-slate-900'}`}>{item.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{item.multiplier > 1 ? `+${Math.round((item.multiplier - 1) * 100)}% dari harga dasar` : 'Harga dasar'}</p>
+                  </div>
+                  <span className="flex h-5 w-5 items-center justify-center text-orange-600">
+                    {selected ? <Check size={18} /> : null}
+                  </span>
                 </div>
-                <p className="mt-3 text-sm text-slate-500">{item.multiplier > 1 ? `+${Math.round((item.multiplier - 1) * 100)}% dari harga dasar` : 'Harga dasar'}</p>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="mb-8">
-        <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
-          <span className="font-black text-orange-500">2.</span>
-          <span>Pilih Layanan</span>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-600">2</span>
+          <p className="text-sm font-medium text-slate-800">Pilih paket layanan</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div className="grid grid-cols-2 gap-2">
           {listLayanan.map((item) => {
             const selected = selectedLayanan?.title === item.title;
             return (
               <button
                 key={item.title}
                 onClick={() => onSelectLayanan(item)}
-                className={`rounded-3xl border p-5 text-left transition ${selected ? 'border-orange-500 bg-orange-50 shadow-lg' : 'border-slate-200 bg-white hover:border-orange-300'}`}
+                className={`rounded-3xl border p-3 text-left transition ${selected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-400'}`}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className={`text-lg font-bold ${selected ? 'text-orange-700' : 'text-slate-900'}`}>{item.title}</h3>
-                  {selected && <Check className="text-orange-600" size={20} />}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 text-orange-500">
+                      {getServiceIcon(item.title)}
+                    </div>
+                    <div>
+                      <p className={`text-xs font-semibold ${selected ? 'text-orange-700' : 'text-slate-900'}`}>{item.title}</p>
+                      <p className="text-[10px] text-slate-500">{item.displayPrice}</p>
+                    </div>
+                  </div>
+                  <span className="flex h-5 w-5 items-center justify-center text-orange-600">
+                    {selected ? <Check size={18} /> : null}
+                  </span>
                 </div>
-                <p className="mt-3 text-sm text-slate-500">{item.displayPrice}</p>
-                <p className="mt-3 text-sm text-slate-400">{item.title === 'Servis Rutin' ? 'Cakupan penuh mulai pengecekan, oli, dan setelan.' : item.title === 'Restorasi Total' ? 'Renovasi detail dengan upgrades kualitas tinggi.' : item.title === 'Custom Build' ? 'Modifikasi sesuai gaya dan performa kamu.' : item.title === 'Body Repair & Cat' ? 'Perbaikan bodi plus pengecatan profesional.' : item.title === 'Upgrade Performa' ? 'Maksimalkan tenaga dan respons mesin.' : 'Perbaikan kelistrikan dan sistem motor.'}</p>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="mb-10">
-        <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
-          <span className="font-black text-orange-500">3.</span>
-          <span>Tambahan (Opsional)</span>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-600">3</span>
+          <p className="text-sm font-medium text-slate-800">Pilih tambahan</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div className="grid grid-cols-2 gap-2">
           {optionalAddOns.map((item) => {
             const active = selectedAddOnIds.includes(item.id);
             return (
               <button
                 key={item.id}
                 onClick={() => onToggleAddOn(item.id)}
-                className={`rounded-3xl border p-5 text-left transition ${active ? 'border-orange-500 bg-orange-50 shadow-lg' : 'border-slate-200 bg-white hover:border-orange-300'}`}
+                className={`rounded-3xl border p-3 text-left transition ${active ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-400'}`}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className={`text-sm font-semibold ${active ? 'text-orange-700' : 'text-slate-900'}`}>{item.title}</h4>
-                  {active && <Check className="text-orange-600" size={18} />}
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className={`text-xs font-semibold ${active ? 'text-orange-700' : 'text-slate-900'}`}>{item.title}</p>
+                    <p className="text-[10px] text-slate-500">+{formatCurrency(item.price)}</p>
+                  </div>
+                  <span className="flex h-5 w-5 items-center justify-center text-orange-600">
+                    {active ? <Check size={18} /> : null}
+                  </span>
                 </div>
-                <p className="mt-3 text-sm text-slate-500">+{formatCurrency(item.price)}</p>
               </button>
             );
           })}
@@ -130,30 +164,19 @@ export default function ServiceSection({ listLayanan, selectedLayanan, onSelectL
       </div>
 
       {selectedVespa && selectedLayanan && (
-        <div className="mb-8">
-          <div className="rounded-[2.25rem] border border-slate-800 bg-slate-900/95 p-5 shadow-2xl shadow-slate-950/30 sm:p-6">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-800 px-3 py-2 text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                  Estimasi Total
-                </div>
-                <div>
-                  <p className="text-slate-400 text-xs uppercase tracking-[0.35em] mb-1">{selectedVespa}</p>
-                  <h3 className="text-2xl font-black text-white sm:text-3xl">{selectedLayanan.title}</h3>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">Estimasi biaya untuk layanan {selectedLayanan.title} pada tipe Vespa {selectedVespa}. Harga akan menyesuaikan dengan pilihan armada dan jadwal Anda.</p>
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] bg-slate-950 border border-slate-800 p-5 text-white shadow-[0_24px_64px_-24px_rgba(15,23,42,0.8)] sm:p-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Total estimasi biaya</p>
-                <p className="mt-4 text-3xl font-black text-orange-400 sm:text-4xl">{formatCurrency(totalHarga)}</p>
-                <button
-                  onClick={onBookingClick}
-                  className="mt-5 w-full rounded-3xl bg-orange-500 px-5 py-3 text-sm font-bold uppercase tracking-[0.08em] text-slate-950 transition hover:bg-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-300"
-                >
-                  Booking Sekarang
-                </button>
-              </div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-900/95 p-4 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Estimasi Total</p>
+              <p className="mt-2 text-3xl font-bold text-orange-400">{formatCurrency(totalHarga)}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={onBookingClick}
+                className="rounded-3xl bg-orange-500 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-950 transition hover:bg-orange-400"
+              >
+                Booking
+              </button>
             </div>
           </div>
         </div>

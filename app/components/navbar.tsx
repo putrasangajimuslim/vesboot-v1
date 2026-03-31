@@ -34,9 +34,14 @@ export default function Navbar({ items, cartIconRef, updateQty, onOpenTrackingMo
         </div>
 
         <div className="hidden md:flex gap-8 font-bold text-slate-500 text-sm">
-          {['Home', 'Produk', 'Bengkel', 'Gallery'].map((link) => (
-            <a key={link} href="#" className="hover:text-orange-600 transition">
-              {link}
+          {[
+            { label: 'Home', href: '/' },
+            { label: 'Produk', href: '/produk' },
+            { label: 'Bengkel', href: '/#bengkel' },
+            { label: 'Gallery', href: '/#gallery' }
+          ].map((link) => (
+            <a key={link.label} href={link.href} className="hover:text-orange-600 transition">
+              {link.label}
             </a>
           ))}
         </div>
@@ -123,9 +128,21 @@ export default function Navbar({ items, cartIconRef, updateQty, onOpenTrackingMo
             exit={{ opacity: 0, y: -20 }}
             className="md:hidden bg-white border-b border-slate-200 p-6 flex flex-col gap-4 shadow-xl font-bold"
           >
-            {['Home', 'Produk', 'Bengkel', 'Gallery', 'Blog', 'Kontak'].map((link) => (
-              <a key={link} href="#" className="text-slate-700 hover:text-orange-600 py-2">
-                {link}
+            {[
+              { label: 'Home', href: '/' },
+              { label: 'Produk', href: '/produk' },
+              { label: 'Bengkel', href: '/#bengkel' },
+              { label: 'Gallery', href: '/#gallery' },
+              { label: 'Blog', href: '/#blog' },
+              { label: 'Kontak', href: '/#kontak' }
+            ].map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-slate-700 hover:text-orange-600 py-2"
+              >
+                {link.label}
               </a>
             ))}
             <div className="pt-2">

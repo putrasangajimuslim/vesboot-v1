@@ -36,6 +36,9 @@ interface Product {
   label: string;
   disc: number;
   category: string;
+  description: string;
+  stock: string;
+  badge?: 'SALE' | 'HOT' | 'NEW';
 }
 
 interface CartItem extends Product {
@@ -53,6 +56,8 @@ export default function Home() {
   const [waktu, setWaktu] = useState("");
   const [selectedArmada, setSelectedArmada] = useState<string | null>(null);
   const [filter, setFilter] = useState("Semua");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("Terbaru");
   const [selectedVespa, setSelectedVespa] = useState<string | null>(null);
   const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
   const [totalHarga, setTotalHarga] = useState<number>(0);
@@ -101,12 +106,92 @@ export default function Home() {
   const jamOperasional = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
   const products: Product[] = [
-    { id: 1, name: "Vespa Original Oil", price: 150000, label: "Populer", disc: 10, category: "Oli" },
-    { id: 2, name: "Vespa Classic Mirror", price: 250000, label: "Baru", disc: 0, category: "Aksesoris" },
-    { id: 3, name: "Racing Exhaust", price: 1200000, label: "Populer", disc: 20, category: "Knalpot" },
-    { id: 4, name: "Handle Grip Premium", price: 350000, label: "Baru", disc: 5, category: "Aksesoris" },
-    { id: 5, name: "Handle Grip Standar", price: 150000, label: "Baru", disc: 2, category: "Aksesoris" },
+    {
+      id: 1,
+      name: "Karburator PE28 Racing",
+      price: 385000,
+      label: "Sale",
+      disc: 10,
+      category: "Mesin",
+      description: "Karburator racing untuk power maksimal, cocok untuk Vespa PX & Sprint.",
+      stock: "Stok Tersedia",
+      badge: 'SALE',
+    },
+    {
+      id: 2,
+      name: "Knalpot Leo Vince Classic",
+      price: 1250000,
+      label: "Hot",
+      disc: 0,
+      category: "Mesin",
+      description: "Knalpot after-market dengan suara rada merah khas dan performa optimal.",
+      stock: "Stok Tersedia",
+      badge: 'HOT',
+    },
+    {
+      id: 3,
+      name: "Spion Bulat Chrome Retro",
+      price: 145000,
+      label: "Aksesoris",
+      disc: 0,
+      category: "Aksesoris",
+      description: "Spion bundar chrome style retro, cocok untuk semua seri Vespa klasik.",
+      stock: "Stok Tersedia",
+    },
+    {
+      id: 4,
+      name: "Body Panel Vespa Sprint",
+      price: 875000,
+      label: "New",
+      disc: 0,
+      category: "Body",
+      description: "Panel bodi OEM replacement berkualitas tinggi, anti karat.",
+      stock: "Stok Tersedia",
+      badge: 'NEW',
+    },
+    {
+      id: 5,
+      name: "Set Filter Udara Premium",
+      price: 275000,
+      label: "Kualitas",
+      disc: 5,
+      category: "Kelistrikan",
+      description: "Filter udara premium untuk aliran lebih stabil dan respons mesin lebih baik.",
+      stock: "Stok Tersedia",
+    },
+    {
+      id: 6,
+      name: "Oli Vespa SAE 20W-50",
+      price: 99000,
+      label: "Oli & Cairan",
+      disc: 0,
+      category: "Oli & Cairan",
+      description: "Oli mesin Vespa khusus dengan aditif anti aus untuk mesin halus.",
+      stock: "Stok Tersedia",
+    },
   ];
+
+  const filtered = products
+    .filter((product) => {
+      const matchesCategory = filter === 'Semua' || product.category === filter;
+      const matchesSearch = searchQuery
+        .toLowerCase()
+        .split(' ')
+        .every((term) => product.name.toLowerCase().includes(term) || product.category.toLowerCase().includes(term));
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'Harga Terendah') {
+        return a.price - b.price;
+      }
+      if (sortOrder === 'Harga Tertinggi') {
+        return b.price - a.price;
+      }
+      if (sortOrder === 'Populer') {
+        return (b.disc || 0) - (a.disc || 0);
+      }
+      return a.id - b.id;
+    });
 
   const dummyTracking = {
     "#VB-2026-001": {
@@ -149,8 +234,6 @@ export default function Home() {
     );
   };
 
-  const filtered = filter === "Semua" ? products : products.filter(p => p.category === filter);
-
   const addOnTotal = selectedAddOnIds.reduce((sum, id) => {
     const item = optionalAddOns.find((addOn) => addOn.id === id);
     return sum + (item?.price ?? 0);
@@ -186,7 +269,7 @@ export default function Home() {
     setIsBookingModalOpen(true);
   };
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start', 
     containScroll: 'keepSnaps',
     dragFree: true 
