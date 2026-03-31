@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 
 import Navbar from '../components/navbar';
 import ProductPage from '../components/ProductPage';
+import FooterSection from '../components/FooterSection';
 
 interface Product {
   id: number;
@@ -189,32 +190,7 @@ export default function ProdukRoutePage() {
         addToCartWithAnimation={addToCartWithAnimation}
       />
 
-      <footer className="bg-slate-950 text-slate-100 py-12">
-        <div className="max-w-7xl mx-auto px-6 grid gap-10 lg:grid-cols-3">
-          <div>
-            <h3 className="text-xl font-black tracking-tight">VESBOOTH</h3>
-            <p className="mt-4 text-sm text-slate-400 max-w-sm">
-              Sparepart dan aksesoris Vespa premium, resmi dan aftermarket pilihan untuk semua seri Vespa.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-bold uppercase tracking-[0.35em] text-orange-500 mb-4">Hubungi Kami</h4>
-            <p className="text-sm text-slate-400">Jl. Raya Vespa No. 12, Jakarta</p>
-            <p className="text-sm text-slate-400 mt-2">Email: support@vesbooth.co.id</p>
-            <p className="text-sm text-slate-400 mt-2">Telp: 0812-3456-7890</p>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-bold uppercase tracking-[0.35em] text-orange-500 mb-4">Tentang</h4>
-            <ul className="space-y-3 text-sm text-slate-400">
-              <li>Pengiriman cepat ke seluruh Indonesia</li>
-              <li>Garansi kualitas sparepart</li>
-              <li>Layanan konsultasi Vespa</li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+      <FooterSection />
     </main>
   );
 }
