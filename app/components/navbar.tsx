@@ -38,7 +38,7 @@ export default function Navbar({ items, cartIconRef, updateQty, onOpenTrackingMo
             { label: 'Home', href: '/' },
             { label: 'Produk', href: '/produk' },
             { label: 'Bengkel', href: '/#bengkel' },
-            { label: 'Gallery', href: '/#gallery' }
+            { label: 'Gallery', href: '/gallery' }
           ].map((link) => (
             <a key={link.label} href={link.href} className="hover:text-orange-600 transition">
               {link.label}
@@ -132,7 +132,7 @@ export default function Navbar({ items, cartIconRef, updateQty, onOpenTrackingMo
               { label: 'Home', href: '/' },
               { label: 'Produk', href: '/produk' },
               { label: 'Bengkel', href: '/#bengkel' },
-              { label: 'Gallery', href: '/#gallery' },
+              { label: 'Gallery', href: '/gallery' },
               { label: 'Blog', href: '/#blog' },
               { label: 'Kontak', href: '/#kontak' }
             ].map((link) => (
